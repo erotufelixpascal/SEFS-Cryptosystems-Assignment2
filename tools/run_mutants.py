@@ -87,6 +87,8 @@ def apply_mutant(spec: dict, dest: Path) -> str | None:
         count = text.count(find) if find else 0
         if count != 1:
             return f"'find' occurs {count} times in {rel} (must be exactly once)"
+        if e.get("replace", "").replace("\r\n", "\n") == find:
+            return f"'replace' is identical to 'find' in {rel}: the fault has not been written yet"
         text = text.replace(find, e.get("replace", "").replace("\r\n", "\n"))
         target.write_text(text, encoding="utf-8", newline="\n")
         try:
