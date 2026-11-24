@@ -185,7 +185,7 @@ The deliverables (Master's report, journal-style manuscript, 10-minute presentat
 
 ## 8. Checklist
 
-- [ ] `sefs-v1.0` tagged; acceptance + format 18/18
+- [x] `sefs-v1.0` tagged; acceptance + format 18/18 (2026-11-24, commit 5bab86a)
 - [x] Budget and AI tool agreed and written in section 3
 - [ ] ≥ 20 faults written and applying (fault author)
 - [ ] `tests/manual/` within budget; time and defect logs filled

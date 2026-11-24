@@ -1,0 +1,64 @@
+FAULT TEMPLATE  (fault author: Pascal)  --  write faults WITHOUT AI help
+==========================================================================
+
+1. Copy the block below into a new file directly in mutants\, named
+      Mnn_short_name.toml        e.g.  M01_something.toml
+   (mutants\*.toml is git-ignored, so the faults stay private.)
+
+2. Fill it in:
+
+----------------------------------------------------------------- copy from here
+area = "authentication"       # authentication | round_trip | chunk_boundaries | tamper
+severity = "medium"           # low | medium | high
+description = "One sentence: what the fault does and what a user would notice"
+
+[[edit]]
+file = "src/sefs/FILE.py"     # auth.py, fs.py, chunk.py, meta.py, crypto.py, util.py or config.py
+find = "exact text copied from that file; must appear exactly once"
+replace = "the same text with your bug in it"
+----------------------------------------------------------------- to here
+
+   - Copy `find` straight from the source file (same spaces, same quotes).
+     If the text appears more than once, include more of the line or the
+     line above it so it becomes unique.
+   - If the text contains double quotes, wrap it in single quotes instead:
+         find = 'if name == "NULL":'
+   - Multi-line text: use '''...''' (or """...""").
+   - A fault that needs two changes gets a second [[edit]] block.
+
+3. Check it applies (from the project folder):
+      python tools\run_mutants.py --tests tests\acceptance
+   Any result except build_error is fine (detected or missed both count).
+   build_error = `find` not found / found twice, or the change breaks the code.
+   Then delete the practice output:  Remove-Item analysis\mutants_acceptance.csv
+
+4. Rules (docs\EXPERIMENT.md and mutants\README.md):
+   - At least 5 faults per area, 20+ in total.
+   - Small and realistic: one plausible programming mistake per fault.
+   - The code must still import and run.
+   - Do not reuse the ideas in mutants\examples\ (the tester has seen them).
+   - Never show the faults to Daniel or put them in any AI chat until scoring.
+
+5. Tracking sheet (keep privately, tick as you go):
+
+   #    file name                     area               severity  applies?
+   M01  ____________________________  authentication     ______    [ ]
+   M02  ____________________________  authentication     ______    [ ]
+   M03  ____________________________  authentication     ______    [ ]
+   M04  ____________________________  authentication     ______    [ ]
+   M05  ____________________________  authentication     ______    [ ]
+   M06  ____________________________  round_trip         ______    [ ]
+   M07  ____________________________  round_trip         ______    [ ]
+   M08  ____________________________  round_trip         ______    [ ]
+   M09  ____________________________  round_trip         ______    [ ]
+   M10  ____________________________  round_trip         ______    [ ]
+   M11  ____________________________  chunk_boundaries   ______    [ ]
+   M12  ____________________________  chunk_boundaries   ______    [ ]
+   M13  ____________________________  chunk_boundaries   ______    [ ]
+   M14  ____________________________  chunk_boundaries   ______    [ ]
+   M15  ____________________________  chunk_boundaries   ______    [ ]
+   M16  ____________________________  tamper             ______    [ ]
+   M17  ____________________________  tamper             ______    [ ]
+   M18  ____________________________  tamper             ______    [ ]
+   M19  ____________________________  tamper             ______    [ ]
+   M20  ____________________________  tamper             ______    [ ]
