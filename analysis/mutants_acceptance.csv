@@ -1,0 +1,8 @@
+arm,id,area,severity,description,result,detail,seconds
+acceptance,X01_username_min_5,authentication,medium,"Minimum username length lowered from 6 to 5, so 5-character usernames are accepted",missed,all tests passed,4.8
+acceptance,X02_weak_pbkdf2,authentication,high,"PBKDF2 iterations cut from 20000 to 1000, which weakens stored password hashes",missed,all tests passed,3.1
+acceptance,X03_insert_drops_char,round_trip,high,"write_to_file copies the text after the insertion point from one byte too far, so one character is lost",detected,tests/acceptance/test_acceptance.py::test_write_inserts,2.6
+acceptance,X04_extra_chunk_at_boundary,chunk_boundaries,medium,"Chunk count rounds up one too many, so a file of exactly 1024 bytes gets an extra empty chunk",detected,tests/acceptance/test_acceptance.py::test_write_spills_into_new_chunk,5.6
+acceptance,X05_hmac_iv_only,tamper,high,"Chunk HMAC covers only the IV, so changes to the encrypted body go unnoticed",detected,tests/acceptance/test_acceptance.py::test_tampered_chunk_detected,3.6
+acceptance,X06_read_skips_meta_digest,tamper,high,read_from_file no longer checks the meta digest against the Master File List,missed,all tests passed,3.9
+acceptance,X07_read_at_end_rejected,round_trip,low,"read_from_file rejects position == file size, so a zero-length read at the end of the file fails",detected,tests/acceptance/test_acceptance.py::test_create_empty_file,2.5

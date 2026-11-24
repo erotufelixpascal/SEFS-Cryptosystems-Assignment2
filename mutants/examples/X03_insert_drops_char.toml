@@ -1,0 +1,8 @@
+area = "round_trip"
+severity = "high"
+description = "write_to_file copies the text after the insertion point from one byte too far, so one character is lost"
+
+[[edit]]
+file = "src/sefs/fs.py"
+find = "new = data[:position] + bytes(content) + data[position:]"
+replace = "new = data[:position] + bytes(content) + data[position + 1:]"

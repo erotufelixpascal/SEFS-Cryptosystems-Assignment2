@@ -1,0 +1,154 @@
+python tools/run_mutants.py --tests tests/acceptance --mutants-dir mutants/examples
+python tools\run_mutants.py --tests tests\ai\run1   
+python tools\run_mutants.py --tests tests\manual           
+
+python -m pytest tests\manual -v
+
+==================================================================
+PART 2 - Simplified SEFS demo (Command Prompt / cmd.exe)
+Guide: docs\PART2_SIMPLIFIED_SEFS.md section 5   Logs: logs\part_2_log.txt, logs\part_2_log.csv
+==================================================================
+
+--- One-time setup (from the project folder, venv active) ---
+pip install -e .
+
+--- Prepare the demo folder ---
+mkdir demo
+cd demo
+python -m sefs keygen
+<nul set /p ="hello SEFS world" > doc1
+python
+
+--- Inside Python (at the >>> prompt) ---
+import sefs
+U, PW = "alice01", "Passw0rd#1"
+sefs.register_user(U, PW, "passwd")                  # 1
+sefs.create_file("notes", U, PW)                     # 1
+sefs.file_size("notes", U, PW)                       # 0
+sefs.write_to_file("notes", 0, b"helloworld", U, PW) # 1
+sefs.write_to_file("notes", 5, b", ", U, PW)         # 1
+sefs.read_from_file("notes", 0, 12, U, PW)           # b'hello, world'
+sefs.encrypt_file("doc1", U, PW)                     # 1
+sefs.read_from_file("doc1", 6, 4, U, PW)             # b'SEFS'
+sefs.read_from_file("doc1", 10, 100, U, PW)          # None (prints nothing)
+sefs.decrypt_file("doc1", "doc1_out.txt", U, PW)     # 1
+sefs.file_integrity_check("doc1", U, PW)             # 1
+sefs.system_health_check(U, PW)                      # 1
+sefs.register_user("mallory1", "Mall0ry#pw", "passwd")  # 1
+sefs.delete_file("doc1", "mallory1", "Mall0ry#pw")   # -1 (not the owner)
+sefs.delete_file("doc1", U, PW)                      # 1
+exit()
+
+--- Show the encryption (run from the demo folder) ---
+dir chunks
+rem Dump every chunk file, no need to type the long name:
+rem   cmd:         for %f in (chunks\*) do certutil -dump %f
+rem   PowerShell:  Get-ChildItem chunks | ForEach-Object { certutil -dump $_.FullName }
+rem Or type one name from 'dir chunks' yourself, e.g.:
+certutil -dump chunks\057f21e8bb1b8308e620998ba5ce3dbc
+
+---
+
+in demo folder, run: certutil -dump chunks\057f21e8bb1b8308e620998ba5ce3dbc
+
+---
+--- Automated Part 2 tests (from the project folder) ---
+python -m pytest tests\acceptance -v -k "create_empty or encrypt_decrypt or write_inserts or non_owner or delete_file"
+
+==================================================================
+PART 3 - Full multi-chunk SEFS demo (cmd or PowerShell)
+Guide: docs\PART3_FULL_SEFS.md section 3   Logs: logs\part_3_log.txt, logs\part_3_log.csv
+==================================================================
+
+--- Prepare a fresh demo folder (from the project folder) ---
+rem If demo_part3 already exists, delete it first so you start clean:
+rem   PowerShell:  Remove-Item -Recurse -Force demo_part3
+rem   cmd:         rmdir /s /q demo_part3
+mkdir demo_part3
+cd demo_part3
+python -m sefs keygen
+python
+
+--- Inside Python: multi-chunk files, insert, append ---
+import sefs, glob, pathlib, os, shutil
+from sefs import meta
+U, PW = "alice01", "Passw0rd#1"
+sefs.register_user(U, PW, "passwd")                 # 1
+chunks = lambda: len(glob.glob("chunks/*"))
+pathlib.Path("report").write_bytes(b"A" * 1024 + b"B" * 1024 + b"C" * 500)
+sefs.encrypt_file("report", U, PW)                  # 1
+chunks()                                            # 3
+sefs.file_size("report", U, PW)                     # 2548
+sefs.read_from_file("report", 1019, 10, U, PW)      # b'AAAAABBBBB'  across a chunk boundary
+before = set(glob.glob("chunks/*"))
+sefs.write_to_file("report", 10, b"xyz", U, PW)     # 1  insert
+sefs.read_from_file("report", 8, 7, U, PW)          # b'AAxyzAA'
+sefs.file_size("report", U, PW)                     # 2551
+chunks()                                            # 3
+len(before & set(glob.glob("chunks/*")))            # 0  old chunks removed
+pathlib.Path("small").write_bytes(b"s" * 512)
+sefs.encrypt_file("small", U, PW)                   # 1
+sefs.write_to_file("small", 512, b"t" * 200, U, PW) # 1  append
+sefs.file_size("small", U, PW)                      # 712
+chunks()                                            # 4  (small is still one chunk)
+
+--- Tampering: flip one bit ---
+sefs.system_health_check(U, PW)                     # 1
+victim = sorted(glob.glob("chunks/*"))[0]
+raw = bytearray(open(victim, "rb").read()); raw[100] ^= 1
+open(victim, "wb").write(raw)
+sefs.system_health_check(U, PW)                     # -1  tampering detected
+sefs.file_integrity_check("report", U, PW)          # shows which file was hit (-1)
+sefs.file_integrity_check("small", U, PW)           #   (the other returns 1)
+raw[100] ^= 1; open(victim, "wb").write(raw)        # undo the flip
+sefs.system_health_check(U, PW)                     # 1
+
+--- Tampering: swap two chunks, then delete one ---
+a, b, c = [ch.name for ch in meta.load("report")[0].chunks]
+os.replace(f"chunks/{a}", "tmpA"); os.replace(f"chunks/{b}", f"chunks/{a}"); os.replace("tmpA", f"chunks/{b}")
+sefs.file_integrity_check("report", U, PW)          # -1  swapped chunks detected
+sefs.read_from_file("report", 0, 5, U, PW)          # None
+os.replace(f"chunks/{a}", "tmpA"); os.replace(f"chunks/{b}", f"chunks/{a}"); os.replace("tmpA", f"chunks/{b}")
+sefs.file_integrity_check("report", U, PW)          # 1  swapped back
+shutil.move(f"chunks/{c}", "backupC")
+sefs.file_integrity_check("report", U, PW)          # -1  missing chunk detected
+shutil.move("backupC", f"chunks/{c}")
+sefs.system_health_check(U, PW)                     # 1
+exit()
+
+--- Automated Part 3 tests (from the project folder) ---
+python -m pytest tests\acceptance -v -k "chunk_round_trip or partial_chunk or spills or tampered"
+
+==================================================================
+PART 1 - User authentication demo (cmd or PowerShell)
+Guide: docs\PART1_USER_AUTHENTICATION.md section 6   Logs: logs\part_1_log.txt, logs\part_1_log.csv
+==================================================================
+
+--- Prepare a fresh demo folder (from the project folder; no master key needed) ---
+rem If demo_part1 already exists, delete it first:
+rem   PowerShell:  Remove-Item -Recurse -Force demo_part1
+rem   cmd:         rmdir /s /q demo_part1
+mkdir demo_part1
+cd demo_part1
+python
+
+--- Inside Python ---
+import sefs
+P = "passwd"
+sefs.register_user("alice01", "Passw0rd#1", P)      #  1
+sefs.register_user("alice01", "Passw0rd#1", P)      # -1  duplicate
+sefs.register_user("bob", "Passw0rd#1", P)          # -1  username too short
+sefs.register_user("carol01", "short", P)           # -1  password too short
+sefs.is_user_valid("alice01", P)                    #  1
+sefs.match_user("alice01", "Passw0rd#1", P)         #  1
+sefs.match_user("alice01", "WrongPass#1", P)        # -1
+print(open(P).read())                               # alice01:<64-hex salt>:<40-hex hash>
+sefs.change_user_password("alice01", "Passw0rd#1", "NewPassw0rd=", P)  # 1
+print(open(P).read())                               # salt and hash both changed
+sefs.match_user("alice01", "Passw0rd#1", P)         # -1  old password no longer works
+sefs.delete_user("alice01", "NewPassw0rd=", P)      #  1
+sefs.is_user_valid("alice01", P)                    # -1
+exit()
+
+--- Automated Part 1 tests (from the project folder) ---
+python -m pytest tests\acceptance -v -k "register or passwd_file or validation or change_password or delete_user"

@@ -1,0 +1,17 @@
+step,date,user,function,command,expected,actual,result,notes
+1,2026-11-21,alice01,register_user,"sefs.register_user(U, PW, ""passwd"")",1,1,PASS,
+2,2026-11-21,alice01,create_file,"sefs.create_file(""notes"", U, PW)",1,1,PASS,empty file with one chunk
+3,2026-11-21,alice01,file_size,"sefs.file_size(""notes"", U, PW)",0,0,PASS,
+4,2026-11-21,alice01,write_to_file,"sefs.write_to_file(""notes"", 0, b""helloworld"", U, PW)",1,1,PASS,
+5,2026-11-21,alice01,write_to_file,"sefs.write_to_file(""notes"", 5, b"", "", U, PW)",1,1,PASS,insert in the middle
+6,2026-11-21,alice01,read_from_file,"sefs.read_from_file(""notes"", 0, 12, U, PW)","b'hello, world'","b'hello, world'",PASS,
+7,2026-11-21,alice01,encrypt_file,"sefs.encrypt_file(""doc1"", U, PW)",1,1,PASS,"doc1 = ""hello SEFS world"" (16 bytes, no newline)"
+8,2026-11-21,alice01,read_from_file,"sefs.read_from_file(""doc1"", 6, 4, U, PW)",b'SEFS',b'SEFS',PASS,
+9,2026-11-21,alice01,read_from_file,"sefs.read_from_file(""doc1"", 10, 100, U, PW)",None,None,PASS,past the end; REPL prints nothing for None
+10,2026-11-21,alice01,decrypt_file,"sefs.decrypt_file(""doc1"", ""doc1_out.txt"", U, PW)",1,1,PASS,
+11,2026-11-21,alice01,file_integrity_check,"sefs.file_integrity_check(""doc1"", U, PW)",1,1,PASS,
+12,2026-11-21,alice01,system_health_check,"sefs.system_health_check(U, PW)",1,1,PASS,
+13,2026-11-21,mallory1,register_user,"sefs.register_user(""mallory1"", ""Mall0ry#pw"", ""passwd"")",1,1,PASS,
+14,2026-11-21,mallory1,delete_file,"sefs.delete_file(""doc1"", ""mallory1"", ""Mall0ry#pw"")",-1,-1,PASS,not the owner; refused
+15,2026-11-21,alice01,delete_file,"sefs.delete_file(""doc1"", U, PW)",1,1,PASS,return value not captured in terminal; confirmed by doc1.meta and its chunk being removed
+16,2026-11-21,-,encryption on disk,certutil -dump chunks\057f21e8bb1b8308e620998ba5ce3dbc,no plaintext visible,"1,076 random-looking bytes; no plaintext",PASS,"16-byte IV then AES-128-CTR ciphertext; ""hello SEFS world"" not found in any chunk file"

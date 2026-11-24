@@ -1,0 +1,31 @@
+# Secrets and encrypted data: never commit
+master.key
+*.key
+passwd
+passwd.tmp
+masterlist
+*.meta
+chunks/
+demo/
+interop/
+
+# Hidden seeded faults (the tester must not see them before scoring)
+mutants/*.toml
+
+# Python / tools
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+cov_*.json
+*.egg-info/
+build/
+dist/
+
+# Slides build tooling
+slides/node_modules/
+demo_part3/
+demo_part1/

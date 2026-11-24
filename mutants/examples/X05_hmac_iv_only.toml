@@ -1,0 +1,13 @@
+area = "tamper"
+severity = "high"
+description = "Chunk HMAC covers only the IV, so changes to the encrypted body go unnoticed"
+
+[[edit]]
+file = "src/sefs/chunk.py"
+find = "mac = crypto.hmac_sha256(key, file)"
+replace = "mac = crypto.hmac_sha256(key, file[:config.IV_LEN])"
+
+[[edit]]
+file = "src/sefs/chunk.py"
+find = "if not crypto.equal(crypto.hmac_sha256(ref.key, file), ref.hmac):"
+replace = "if not crypto.equal(crypto.hmac_sha256(ref.key, file[:config.IV_LEN]), ref.hmac):"

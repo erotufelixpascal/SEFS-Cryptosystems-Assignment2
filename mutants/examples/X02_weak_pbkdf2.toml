@@ -1,0 +1,8 @@
+area = "authentication"
+severity = "high"
+description = "PBKDF2 iterations cut from 20000 to 1000, which weakens stored password hashes"
+
+[[edit]]
+file = "src/sefs/config.py"
+find = "PBKDF2_ITER = 20000"
+replace = "PBKDF2_ITER = 1000"

@@ -1,0 +1,58 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Mutants: practice (acceptance vs examples)",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/run_mutants.py",
+            "args": ["--tests", "tests/acceptance", "--mutants-dir", "mutants/examples"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Mutants: manual arm",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/run_mutants.py",
+            "args": ["--tests", "tests/manual"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Mutants: AI arm run 1",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/run_mutants.py",
+            "args": ["--tests", "tests/ai/run1"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Coverage: manual arm",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/measure_coverage.py",
+            "args": ["--tests", "tests/manual", "--html"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Coverage: AI arm run 1",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/tools/measure_coverage.py",
+            "args": ["--tests", "tests/ai/run1", "--html"],
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Analysis",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/analysis/analyze.py",
+            "cwd": "${workspaceFolder}",
+            "console": "integratedTerminal"
+        }
+    ]
+}

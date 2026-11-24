@@ -1,0 +1,136 @@
+SEFS Part 3 (Full multi-chunk SEFS) - demonstration log
+Date: 2026-11-24
+Environment: Windows 11, PowerShell, Python 3.12.10, project venv (.venv), folder demo_part3\
+Procedure: docs/PART3_FULL_SEFS.md, section 3, plus the swapped / missing chunk checks it suggests
+Commands: Commands.txt, PART 3 section
+Run by: the group, live in the terminal (output copied below in the order it was run)
+
+------------------------------------------------------------------
+Setup
+------------------------------------------------------------------
+(.venv) PS ...\SEF back up\demo_part3> python -m sefs keygen
+OKAY (1)
+(.venv) PS ...\SEF back up\demo_part3> python
+Python 3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)] on win32
+
+------------------------------------------------------------------
+1. Multi-chunk file, read across a boundary, insert, append
+------------------------------------------------------------------
+>>> import sefs, glob, pathlib, os, shutil
+>>> from sefs import meta
+>>> U, PW = "alice01", "Passw0rd#1"
+>>> sefs.register_user(U, PW, "passwd")                 # 1
+1
+>>> chunks = lambda: len(glob.glob("chunks/*"))
+>>> pathlib.Path("report").write_bytes(b"A" * 1024 + b"B" * 1024 + b"C" * 500)
+2548
+>>> sefs.encrypt_file("report", U, PW)                  # 1
+1
+>>> chunks()                                            # 3
+3
+>>> sefs.file_size("report", U, PW)                     # 2548
+2548
+>>> sefs.read_from_file("report", 1019, 10, U, PW)      # b'AAAAABBBBB'  across a chunk boundary
+b'AAAAABBBBB'
+>>> before = set(glob.glob("chunks/*"))
+>>> sefs.write_to_file("report", 10, b"xyz", U, PW)     # 1  insert
+1
+>>> sefs.read_from_file("report", 8, 7, U, PW)          # b'AAxyzAA'
+b'AAxyzAA'
+>>> sefs.file_size("report", U, PW)                     # 2551
+2551
+>>> chunks()                                            # 3
+3
+>>> len(before & set(glob.glob("chunks/*")))            # 0  old chunks removed
+0
+>>> pathlib.Path("small").write_bytes(b"s" * 512)
+512
+>>> sefs.encrypt_file("small", U, PW)                   # 1
+1
+>>> sefs.write_to_file("small", 512, b"t" * 200, U, PW) # 1  append
+1
+>>> sefs.file_size("small", U, PW)                      # 712
+712
+>>> chunks()                                            # 4  (small is still one chunk)
+4
+
+------------------------------------------------------------------
+2. Tampering: swap two chunks, then remove one
+------------------------------------------------------------------
+>>> a, b, c = [ch.name for ch in meta.load("report")[0].chunks]
+>>> os.replace(f"chunks/{a}", "tmpA"); os.replace(f"chunks/{b}", f"chunks/{a}"); os.replace("tmpA", f"chunks/{b}")
+>>> sefs.file_integrity_check("report", U, PW)          # -1  swapped chunks detected
+-1
+>>> sefs.read_from_file("report", 0, 5, U, PW)          # None
+>>> os.replace(f"chunks/{a}", "tmpA"); os.replace(f"chunks/{b}", f"chunks/{a}"); os.replace("tmpA", f"chunks/{b}")
+>>> sefs.file_integrity_check("report", U, PW)          # 1  swapped back
+1
+>>> shutil.move(f"chunks/{c}", "backupC")
+'backupC'
+>>> sefs.file_integrity_check("report", U, PW)          # -1  missing chunk detected
+-1
+>>> shutil.move("backupC", f"chunks/{c}")
+'chunks/3df8b6f59b355acb226c2f12f685cb5e'
+>>> sefs.system_health_check(U, PW)                     # 1
+1
+
+------------------------------------------------------------------
+3. Tampering: flip one bit
+------------------------------------------------------------------
+>>> sefs.system_health_check(U, PW)
+1
+>>> victim = sorted(glob.glob("chunks/*"))[0]
+>>> raw = bytearray(open(victim, "rb").read()); raw[100] ^= 1
+>>> open(victim, "wb").write(raw)
+1076
+>>> sefs.system_health_check(U, PW)
+-1
+>>> sefs.file_integrity_check("report", U, PW)
+-1
+>>> sefs.file_integrity_check("small", U, PW)
+1
+>>> raw[100] ^= 1; open(victim, "wb").write(raw)
+1076
+>>> sefs.system_health_check(U, PW)
+1
+
+------------------------------------------------------------------
+Results vs expected
+------------------------------------------------------------------
+register_user alice01 ................. 1            PASS
+encrypt_file report (2,548 B) ......... 1            PASS
+chunks used ........................... 3            PASS  max(1, ceil(2548/1024)) = 3
+file_size report ...................... 2548         PASS
+read 10 B from 1019 ................... b'AAAAABBBBB' PASS (5 B from chunk A + 5 B from chunk B)
+write_to_file insert "xyz" at 10 ...... 1            PASS
+read 7 B from 8 ....................... b'AAxyzAA'   PASS  (later content shifted forward)
+file_size after insert ................ 2551         PASS
+chunks after insert ................... 3            PASS  (minimum count kept)
+old chunk files still present ......... 0            PASS  (old chunks removed after the new meta was saved)
+encrypt_file small (512 B) ............ 1            PASS
+append 200 B at 512 ................... 1            PASS
+file_size small ....................... 712          PASS
+total chunks .......................... 4            PASS  (small still 1 chunk: ceil(712/1024) = 1)
+report with chunks A and B swapped .... -1           PASS  (each chunk checked under the other's key)
+read_from_file while swapped .......... None         PASS  (nothing returned from tampered data)
+report after swapping back ............ 1            PASS
+report with chunk C missing ........... -1           PASS
+health after restoring C .............. 1            PASS
+health before the bit flip ............ 1            PASS
+health with 1 bit flipped ............. -1           PASS  (tampering detected)
+file_integrity_check report ........... -1           PASS  (the flipped chunk belonged to report)
+file_integrity_check small ............ 1            PASS  (untouched file still verifies)
+health after undoing the flip ......... 1            PASS
+
+All 24 checks matched the expected value.
+
+------------------------------------------------------------------
+Automated Part 3 tests
+------------------------------------------------------------------
+> python -m pytest tests\acceptance -v -k "chunk_round_trip or partial_chunk or spills or tampered"
+test_chunk_round_trip_three_chunks ............ PASSED
+test_append_to_partial_chunk_stays_one_chunk .. PASSED
+test_write_spills_into_new_chunk .............. PASSED
+test_tampered_chunk_detected .................. PASSED
+test_tampered_meta_detected ................... PASSED
+5 passed, 10 deselected in 0.85s

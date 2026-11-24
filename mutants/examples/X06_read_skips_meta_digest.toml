@@ -1,0 +1,18 @@
+area = "tamper"
+severity = "high"
+description = "read_from_file no longer checks the meta digest against the Master File List"
+
+[[edit]]
+file = "src/sefs/fs.py"
+find = """
+    auth = _authorize(f, u, p)
+    if auth is None:
+        return None
+    data = _verify_chain(auth[1])
+    if data is None or position"""
+replace = """
+    auth = _authorize(f, u, p, check_digest=False)
+    if auth is None:
+        return None
+    data = _verify_chain(auth[1])
+    if data is None or position"""

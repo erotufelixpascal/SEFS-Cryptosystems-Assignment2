@@ -1,0 +1,102 @@
+SEFS Part 2 (Simplified SEFS) - demonstration log
+Date: 2026-11-21
+Environment: Windows 11, Command Prompt (cmd.exe), Python 3.12.10, project venv (.venv)
+Procedure: docs/PART2_SIMPLIFIED_SEFS.md, section 5
+
+------------------------------------------------------------------
+Setup (Command Prompt)
+------------------------------------------------------------------
+(.venv) ...\SEF back up>pip install -e .
+(.venv) ...\SEF back up>cd demo
+(.venv) ...\SEF back up\demo>python -m sefs keygen
+(.venv) ...\SEF back up\demo>rem doc1 created containing exactly "hello SEFS world" (16 bytes, no trailing newline)
+
+------------------------------------------------------------------
+Session
+------------------------------------------------------------------
+(.venv) C:\...\SEF back up\demo>python
+Python 3.12.10 (tags/v3.12.10:0cc8128, Apr  8 2025, 12:21:36) [MSC v.1943 64 bit (AMD64)] on win32
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import sefs
+>>> U, PW = "alice01", "Passw0rd#1"
+>>> sefs.register_user(U, PW, "passwd")
+1
+>>> sefs.create_file("notes", U, PW)
+1
+>>> sefs.file_size("notes", U, PW)
+0
+>>> sefs.write_to_file("notes", 0, b"helloworld", U, PW)
+1
+>>> sefs.write_to_file("notes", 5, b", ", U, PW)
+1
+>>> sefs.read_from_file("notes", 0, 12, U, PW)
+b'hello, world'
+>>> sefs.encrypt_file("doc1", U, PW)
+1
+>>> sefs.read_from_file("doc1", 6, 4, U, PW)
+b'SEFS'
+>>> sefs.read_from_file("doc1", 10, 100, U, PW)
+>>> sefs.decrypt_file("doc1", "doc1_out.txt", U, PW)
+1
+>>> sefs.file_integrity_check("doc1", U, PW)
+1
+>>> sefs.system_health_check(U, PW)
+1
+>>> sefs.register_user("mallory1", "Mall0ry#pw", "passwd")
+1
+>>> sefs.delete_file("doc1", "mallory1", "Mall0ry#pw")
+-1
+>>> sefs.delete_file("doc1", U, PW)
+1
+
+------------------------------------------------------------------
+Results vs expected
+------------------------------------------------------------------
+register_user alice01 ............ 1             PASS
+create_file notes ................ 1             PASS  (empty file, one chunk)
+file_size notes .................. 0             PASS
+write_to_file at 0 ............... 1             PASS
+write_to_file insert at 5 ........ 1             PASS
+read_from_file notes 0..12 ....... b'hello, world' PASS (insert in the middle)
+encrypt_file doc1 ................ 1             PASS
+read_from_file doc1 6,4 .......... b'SEFS'       PASS
+read_from_file doc1 10,100 ....... None          PASS  (past the end; REPL prints nothing for None)
+decrypt_file doc1 ................ 1             PASS
+file_integrity_check doc1 ........ 1             PASS
+system_health_check .............. 1             PASS
+register_user mallory1 ........... 1             PASS
+delete_file doc1 by mallory1 ..... -1            PASS  (not the owner, refused)
+delete_file doc1 by alice01 ...... 1             PASS
+
+Note: the final "1" was not in the captured terminal output. It is confirmed by the
+folder state afterwards: doc1.meta was removed and one of the two chunk files was deleted.
+
+------------------------------------------------------------------
+Encryption on disk
+------------------------------------------------------------------
+Before the final delete, demo\chunks\ held two chunk files:
+  057f21e8bb1b8308e620998ba5ce3dbc
+  7f22f82b2a54d0daad521950fc1a51cd
+Searching both for the plaintext "hello SEFS world" found 0 matches, so the
+contents on disk are encrypted.
+
+Folder state after the demo:
+  demo\chunks\057f21e8bb1b8308e620998ba5ce3dbc   (notes)
+  demo\doc1            original plaintext input (not managed by SEFS after deletion)
+  demo\doc1_out.txt    decrypted output
+  demo\master.key, demo\masterlist, demo\notes.meta, demo\passwd
+
+------------------------------------------------------------------
+Hex dump of the remaining chunk (notes)
+------------------------------------------------------------------
+PS ...\SEF back up\demo> certutil -dump chunks\057f21e8bb1b8308e620998ba5ce3dbc
+  0434   (= 1,076 bytes, the fixed chunk size in docs/FILE_FORMAT.md)
+    0000  eb 3d 21 0e 02 fa a1 a8  fc 9c 29 24 1c c9 49 c4   .=!.......)$..I.   <- IV (16 bytes)
+    0010  05 b6 10 95 10 d0 b0 03  50 87 44 a7 53 1d fc c1   ........P.D.S...   <- ciphertext starts
+    0020  3b 71 89 b4 73 40 f2 79  cd 67 f1 b5 8b a3 0d ef   ;q..s@.y.g......
+    ...   (rows 0030-0420 omitted: random-looking bytes throughout)
+    0430  5b c4 ce d6                                        [...
+CertUtil: -dump command completed successfully.
+
+Observation: the plaintext "hello, world", the "NULL" next-chunk marker and the
+~1,000 bytes of zero padding are all invisible; every byte after the IV looks random.

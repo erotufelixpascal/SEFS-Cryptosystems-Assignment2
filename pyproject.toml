@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sefs"
+version = "1.0.0"
+description = "SEFS: Secure Encrypted File System (Group 6, Python)"
+requires-python = ">=3.10"
+dependencies = ["cryptography>=42"]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "coverage>=7"]
+analysis = ["matplotlib>=3.8"]
+
+[project.scripts]
+sefs = "sefs.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

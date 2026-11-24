@@ -1,0 +1,8 @@
+area = "authentication"
+severity = "medium"
+description = "Minimum username length lowered from 6 to 5, so 5-character usernames are accepted"
+
+[[edit]]
+file = "src/sefs/config.py"
+find = "USER_MIN = 6\n"
+replace = "USER_MIN = 5\n"

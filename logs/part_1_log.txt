@@ -1,0 +1,72 @@
+SEFS Part 1 (User authentication) - demonstration log
+Date: 2026-11-24
+Environment: Windows 11, PowerShell, Python 3.12.10, project venv (.venv), folder demo_part1\
+Procedure: docs/PART1_USER_AUTHENTICATION.md, section 6 (plus printing passwd before and after the password change)
+Commands: Commands.txt, PART 1 section
+Run by: the group, live in the terminal
+
+------------------------------------------------------------------
+Setup
+------------------------------------------------------------------
+(.venv) PS ...\SEF back up> mkdir demo_part1; cd demo_part1
+(.venv) PS ...\SEF back up\demo_part1> python
+(no master key needed: Part 1 only uses the passwd file)
+
+------------------------------------------------------------------
+Session
+------------------------------------------------------------------
+>>> import sefs
+>>> P = "passwd"
+>>> sefs.register_user("alice01", "Passw0rd#1", P)      #  1
+1
+>>> sefs.register_user("alice01", "Passw0rd#1", P)      # -1  duplicate
+-1
+>>> sefs.register_user("bob", "Passw0rd#1", P)          # -1  username too short
+-1
+>>> sefs.register_user("carol01", "short", P)           # -1  password too short
+-1
+>>> sefs.is_user_valid("alice01", P)                    #  1
+1
+>>> sefs.match_user("alice01", "Passw0rd#1", P)         #  1
+1
+>>> sefs.match_user("alice01", "WrongPass#1", P)        # -1
+-1
+>>> print(open(P).read())                               # line: alice01:salt:hash
+alice01:cad0dcf8eaab191c347403aee5dd4791a6a9b8e71562bfb48d8ff979ef10455c:cf3018ae2b235d1117cbc6864193d373098a8b08
+
+>>> sefs.change_user_password("alice01", "Passw0rd#1", "NewPassw0rd=", P)  # 1
+1
+>>> print(open(P).read())                               # salt and hash both changed
+alice01:3027e7f3007f1e74eec09e746b0d451dca0f6a0ce10e2206ee713b3280d90a40:d4b93012c4181fb54d1c9e3c461434a615683dab
+
+>>> sefs.match_user("alice01", "Passw0rd#1", P)         # -1  old password no longer works
+-1
+>>> sefs.delete_user("alice01", "NewPassw0rd=", P)      #  1
+1
+>>> sefs.is_user_valid("alice01", P)                    # -1
+-1
+
+------------------------------------------------------------------
+Results vs expected
+------------------------------------------------------------------
+register_user alice01 ................. 1    PASS
+register_user alice01 again ........... -1   PASS  (duplicate rejected)
+register_user "bob" ................... -1   PASS  (username shorter than 6)
+register_user carol01 / "short" ....... -1   PASS  (password shorter than 9)
+is_user_valid alice01 ................. 1    PASS
+match_user, correct password .......... 1    PASS
+match_user, wrong password ............ -1   PASS
+passwd line format .................... ok   PASS  (64-hex salt = 32 B, 40-hex hash = 20 B; no password stored)
+change_user_password .................. 1    PASS
+salt and hash after the change ........ both new  PASS  (fresh salt, so the whole line changed)
+match_user, old password .............. -1   PASS
+delete_user ........................... 1    PASS
+is_user_valid after delete ............ -1   PASS  (passwd is now empty)
+
+All 13 checks matched the expected value.
+
+------------------------------------------------------------------
+Automated Part 1 tests
+------------------------------------------------------------------
+> python -m pytest tests\acceptance -v -k "register or passwd_file or validation or change_password or delete_user"
+5 passed, 10 deselected

@@ -1,0 +1,14 @@
+step,date,user,function,command,expected,actual,result,notes
+1,2026-11-24,alice01,register_user,"sefs.register_user(""alice01"", ""Passw0rd#1"", P)",1,1,PASS,
+2,2026-11-24,alice01,register_user,"sefs.register_user(""alice01"", ""Passw0rd#1"", P)",-1,-1,PASS,duplicate rejected
+3,2026-11-24,bob,register_user,"sefs.register_user(""bob"", ""Passw0rd#1"", P)",-1,-1,PASS,username shorter than 6
+4,2026-11-24,carol01,register_user,"sefs.register_user(""carol01"", ""short"", P)",-1,-1,PASS,password shorter than 9
+5,2026-11-24,alice01,is_user_valid,"sefs.is_user_valid(""alice01"", P)",1,1,PASS,
+6,2026-11-24,alice01,match_user,"sefs.match_user(""alice01"", ""Passw0rd#1"", P)",1,1,PASS,correct password
+7,2026-11-24,alice01,match_user,"sefs.match_user(""alice01"", ""WrongPass#1"", P)",-1,-1,PASS,wrong password
+8,2026-11-24,alice01,passwd line,print(open(P).read()),username:64-hex salt:40-hex hash,alice01:cad0dcf8…455c:cf3018ae…8b08,PASS,no password stored; 32-byte salt and 20-byte hash
+9,2026-11-24,alice01,change_user_password,"sefs.change_user_password(""alice01"", ""Passw0rd#1"", ""NewPassw0rd="", P)",1,1,PASS,
+10,2026-11-24,alice01,passwd line,print(open(P).read()),new salt and new hash,alice01:3027e7f3…0a40:d4b93012…3dab,PASS,fresh salt on password change; whole line changed
+11,2026-11-24,alice01,match_user,"sefs.match_user(""alice01"", ""Passw0rd#1"", P)",-1,-1,PASS,old password no longer works
+12,2026-11-24,alice01,delete_user,"sefs.delete_user(""alice01"", ""NewPassw0rd="", P)",1,1,PASS,
+13,2026-11-24,alice01,is_user_valid,"sefs.is_user_valid(""alice01"", P)",-1,-1,PASS,account removed; passwd now empty

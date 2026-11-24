@@ -1,0 +1,25 @@
+step,date,user,function,command,expected,actual,result,notes
+1,2026-11-24,alice01,register_user,"sefs.register_user(U, PW, ""passwd"")",1,1,PASS,
+2,2026-11-24,alice01,encrypt_file,"sefs.encrypt_file(""report"", U, PW)",1,1,PASS,report = 1024 x A + 1024 x B + 500 x C (2548 B)
+3,2026-11-24,-,chunk count,chunks(),3,3,PASS,"max(1, ceil(2548/1024)) = 3"
+4,2026-11-24,alice01,file_size,"sefs.file_size(""report"", U, PW)",2548,2548,PASS,
+5,2026-11-24,alice01,read_from_file,"sefs.read_from_file(""report"", 1019, 10, U, PW)",b'AAAAABBBBB',b'AAAAABBBBB',PASS,read across the A/B chunk boundary
+6,2026-11-24,alice01,write_to_file,"sefs.write_to_file(""report"", 10, b""xyz"", U, PW)",1,1,PASS,insert
+7,2026-11-24,alice01,read_from_file,"sefs.read_from_file(""report"", 8, 7, U, PW)",b'AAxyzAA',b'AAxyzAA',PASS,later content shifted forward
+8,2026-11-24,alice01,file_size,"sefs.file_size(""report"", U, PW)",2551,2551,PASS,
+9,2026-11-24,-,chunk count,chunks(),3,3,PASS,minimum chunk count kept after insert
+10,2026-11-24,-,old chunks removed,"len(before & set(glob.glob(""chunks/*"")))",0,0,PASS,old chunks deleted only after the new meta was saved
+11,2026-11-24,alice01,encrypt_file,"sefs.encrypt_file(""small"", U, PW)",1,1,PASS,small = 512 B
+12,2026-11-24,alice01,write_to_file,"sefs.write_to_file(""small"", 512, b""t"" * 200, U, PW)",1,1,PASS,append to a partial chunk
+13,2026-11-24,alice01,file_size,"sefs.file_size(""small"", U, PW)",712,712,PASS,
+14,2026-11-24,-,chunk count,chunks(),4,4,PASS,"small still one chunk: ceil(712/1024) = 1"
+15,2026-11-24,alice01,file_integrity_check,"sefs.file_integrity_check(""report"", U, PW)",-1,-1,PASS,chunks A and B swapped on disk
+16,2026-11-24,alice01,read_from_file,"sefs.read_from_file(""report"", 0, 5, U, PW)",None,None,PASS,nothing returned while chunks are swapped
+17,2026-11-24,alice01,file_integrity_check,"sefs.file_integrity_check(""report"", U, PW)",1,1,PASS,after swapping back
+18,2026-11-24,alice01,file_integrity_check,"sefs.file_integrity_check(""report"", U, PW)",-1,-1,PASS,chunk C missing
+19,2026-11-24,alice01,system_health_check,"sefs.system_health_check(U, PW)",1,1,PASS,after restoring chunk C
+20,2026-11-24,alice01,system_health_check,"sefs.system_health_check(U, PW)",1,1,PASS,before the bit flip
+21,2026-11-24,alice01,system_health_check,"sefs.system_health_check(U, PW)",-1,-1,PASS,one bit flipped at byte 100 of the first chunk file
+22,2026-11-24,alice01,file_integrity_check,"sefs.file_integrity_check(""report"", U, PW)",-1,-1,PASS,the flipped chunk belonged to report
+23,2026-11-24,alice01,file_integrity_check,"sefs.file_integrity_check(""small"", U, PW)",1,1,PASS,untouched file still verifies
+24,2026-11-24,alice01,system_health_check,"sefs.system_health_check(U, PW)",1,1,PASS,after undoing the bit flip

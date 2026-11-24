@@ -1,0 +1,8 @@
+area = "round_trip"
+severity = "low"
+description = "read_from_file rejects position == file size, so a zero-length read at the end of the file fails"
+
+[[edit]]
+file = "src/sefs/fs.py"
+find = "if data is None or position > len(data) or length > len(data) - position:"
+replace = "if data is None or position >= len(data) or length > len(data) - position:"
