@@ -30,3 +30,4 @@ slides/node_modules/
 demo_part3/
 demo_part1/
 mutants/FAULT_INDEX.txt
+mutants/*.csv
