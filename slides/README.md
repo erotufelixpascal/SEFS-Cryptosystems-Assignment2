@@ -2,7 +2,8 @@
 
 | File | What it is |
 |---|---|
-| `Group 6 SEFS Progress v6.pptx` | Current deck: Parts 1–3, security goals (CIA) |
+| `Group 6 SEFS Progress v7.pptx` | Current deck: Parts 1–3, security goals (CIA), extension experiment, results and conclusions |
+| `Group 6 SEFS Progress v6.pptx` | Earlier deck: Parts 1–3, security goals (CIA) |
 | `Group 6 SEFS Progress v5.pptx` | Earlier deck: Parts 1 and 2 |
 | `Group 6 SEFS Progress v4.pptx` | Previous progress review, kept for reference |
 | `build_slides.js` | Generates the current deck. Edit this, not the .pptx |

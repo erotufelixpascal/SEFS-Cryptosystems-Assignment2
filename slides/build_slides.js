@@ -11,7 +11,7 @@ const pptxgen = require("pptxgenjs");
 const { applyTheme } = require("./apply_theme.js");
 
 // Bump the version number each time the deck is reissued (v4 was the previous progress review).
-const OUT = "Group 6 SEFS Progress v6.pptx";
+const OUT = "Group 6 SEFS Progress v7.pptx";
 
 const TEAM = [
   ["Pascal Felix Erotu", "MAY26/MAIDS/0056U"],
@@ -23,7 +23,7 @@ const DONE = {
   part2: true,
   part3: true,
   part4: false,
-  extension: false,
+  extension: true,
 };
 
 // One row per part on the status slide. state: "done" | "progress" | "todo"
@@ -32,7 +32,7 @@ const STATUS = [
   { part: "Part 2 · Simplified SEFS", marks: "30 marks", state: "done", detail: "9 functions · demo 15/15 recorded in logs/" },
   { part: "Part 3 · Full multi-chunk SEFS", marks: "45 marks", state: "done", detail: "chunk chains · demo 24/24 recorded in logs/" },
   { part: "Part 4 · Interoperability", marks: "5 marks", state: "progress", detail: "Next: exchange files with a partner group" },
-  { part: "Extension · AI vs manual tests", marks: "+25 marks", state: "todo", detail: "Experiment not started" },
+  { part: "Extension · AI vs manual tests", marks: "+25 marks", state: "done", detail: "AI 14/20 vs manual 5/20 seeded faults (p = 0.004)" },
 ];
 
 const THEME = {
@@ -646,11 +646,11 @@ function closing() {
   s.addText("Summary and next steps", { placeholder: "title" });
   s.addText("Updated as each part is completed", { placeholder: "body" });
   const done = [
-    "Users are authenticated with salted, slow hashes; passwords are never stored",
-    "Files are encrypted per chunk with fresh keys and verified before decryption",
-    "Every operation fails closed and every save is crash-safe",
+    "Parts 1–3 built, tested (18/18) and demonstrated (52/52 checks)",
+    "Salted, slow password hashes; per-chunk encryption verified before decryption",
+    "Every operation fails closed; every save is crash-safe",
   ];
-  if (DONE.part3) done.push("Multi-chunk files: inserts, appends and every tampering attack demonstrated");
+  if (DONE.extension) done.push("Extension: AI-assisted tests caught 70% of seeded faults vs 25% manual");
   const next = [];
   if (!DONE.part3) next.push("Part 3: complete, demonstrate and log multi-chunk files");
   if (!DONE.part4) next.push("Part 4: exchange files with a partner group (Q9)");
@@ -721,6 +721,290 @@ function securityGoals() {
   s.addNotes("Confidentiality comes from AES-CTR with fresh keys and IVs; integrity from HMACs, the meta digest and the chain checks, always verified before decryption; authentication from the salted, slow password hash and the owner check on every call. Strictly, the A in the CIA triad is Availability; we address it only partially, as the note says.");
 }
 
+// ======================================================================
+// EXTENSION: AI-ASSISTED VS MANUAL TEST GENERATION (results from analysis/results.md)
+// ======================================================================
+function extension() {
+  const SEC = "Extension";
+  divider("06", "Extension · AI-assisted vs manual test generation", SEC);
+
+  // ---- research question and design ----
+  const d = content("The question, and how we tested it fairly", SEC);
+  box(d, [
+    { text: "Research question", options: { bold: true, fontSize: 15, color: HEX.accent2, breakLine: true } },
+    { text: "Does AI-assisted test generation find more implementation defects than manually designed tests under a fixed time budget?", options: { fontSize: 17, breakLine: true } },
+    { text: " ", options: { fontSize: 8, breakLine: true } },
+    { text: "H0: both find the same share of seeded faults.  H1: the shares differ.", options: { fontSize: 14, italic: true } },
+  ], 0.6, 1.4, 12.1, 1.55, { fill: C.text1, color: C.background1, align: "left", margin: 14 });
+  const steps = [
+    ["Freeze", "code tagged sefs-v1.0"],
+    ["Seed faults", "Pascal writes 20 hidden bugs, 5 per area"],
+    ["Manual arm", "Daniel, no AI, 120 min"],
+    ["AI arm", "Claude proposes tests, Daniel reviews"],
+    ["Score", "every suite run against every fault"],
+  ];
+  steps.forEach(([h, t2], i) => {
+    const x = 0.6 + i * 2.48;
+    box(d, hd(h, t2, 13), x, 3.3, 2.2, 1.35, { fill: i === 1 ? C.accent3 : i === 3 ? C.accent1 : C.background2, color: i === 1 || i === 3 ? C.background1 : C.text1, size: 15 });
+    if (i < 4) arrow(d, x + 2.23, 3.975, x + 2.45, 3.975);
+  });
+  const ctl = [
+    ["Faults stay hidden", "The tester never sees them; they are git-ignored and scored only at the end."],
+    ["AI kept isolated", "The AI sees only the specification and fixtures, never the code, faults or manual tests."],
+    ["Manual first", "Manual tests are written before any AI output exists, so the AI cannot influence them."],
+  ];
+  ctl.forEach(([h, t2], i) => {
+    const x = 0.6 + i * 4.13;
+    circleNum(d, i + 1, x, 5.0, 0.42);
+    txt(d, [
+      { text: h, options: { bold: true, color: C.text1, fontSize: 15, breakLine: true } },
+      { text: t2, options: { fontSize: 13 } },
+    ], x + 0.55, 4.97, 3.4, 1.3);
+  });
+  d.addNotes("The design follows docs/EXPERIMENT.md. Seeded faults are the held-out evaluation set, like a test set in machine learning: both arms are scored against the same 20 faults.");
+
+  // ---- the three arms ----
+  const a = content("Three arms, scored against the same 20 faults", SEC);
+  const H = (t2) => ({ text: t2, options: { bold: true, color: C.background1, fill: { color: C.text1 } } });
+  const rowsA = [
+    ["manual", "Daniel, by hand, no AI", "8 tests", "160 min (120 + 40 over budget)"],
+    ["ai/run1", "Fresh Claude agent proposes; Daniel reviews in a walkthrough", "132 functions, 340 cases", "50 min review (+ 6.5 min machine generation)"],
+    ["manual_extended", "Daniel, extra tests after the budget", "5 tests", "100 min"],
+  ];
+  a.addTable([[H("Arm"), H("Who writes the tests"), H("Tests"), H("Tester time")], ...rowsA.map((r, i) => r.map((c, j) => ({
+    text: c, options: { bold: j === 0, fontFace: j === 0 ? "Courier New" : undefined, fill: { color: i % 2 ? "FFFFFF" : HEX.lt2 } },
+  })))], { x: 0.6, y: 1.4, w: 12.1, colW: [2.2, 4.6, 2.4, 2.9], rowH: 0.6, fontSize: 14, color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "D5DCE2" }, valign: "middle", margin: [0.04, 0.1, 0.04, 0.1] });
+  const areas = [["Authentication", "M01–M05"], ["Round trip", "M06–M10"], ["Chunk boundaries", "M11–M15"], ["Tamper", "M16–M20"]];
+  txt(a, "The 20 seeded faults: small, realistic bugs, 5 per area", 0.6, 4.2, 12.1, 0.4, { bold: true, color: C.text1, size: 16 });
+  areas.forEach(([h, ids], i) => {
+    box(a, hd(h, ids, 13), 0.6 + i * 3.08, 4.7, 2.85, 0.95, { fill: C.accent3, color: C.background1, size: 15 });
+  });
+  txt(a, "A fault counts as detected when at least one test in the suite fails on the faulty copy of the code. Every suite passed on the unchanged code first.", 0.6, 5.95, 12.1, 0.7, { size: 14 });
+  a.addNotes("Daniel had no IT background, so all three arms measure a beginner tester. The AI arm used an isolated Claude Opus 5.5 agent instead of the claude.ai chat that was planned; the review was a 45-minute group walkthrough.");
+
+  // ---- how scoring works ----
+  const sc = content("How a suite is scored against the hidden faults", SEC);
+  const flow = [
+    ["Copy the code", "a fresh temporary copy of src/sefs for each fault"],
+    ["Insert one bug", "apply the fault's find/replace edit to the copy"],
+    ["Run the suite", "every test in the arm, against the faulty copy"],
+    ["Record", "any test fails → detected; all pass → missed"],
+  ];
+  flow.forEach(([h, t2], i) => {
+    const y = 1.45 + i * 1.15;
+    circleNum(sc, i + 1, 0.6, y + 0.22, 0.5, i === 3 ? C.accent1 : C.accent2);
+    box(sc, hd(h, t2, 13), 1.3, y, 4.5, 0.95, { fill: C.background2, align: "left", size: 15, margin: 10 });
+  });
+  txt(sc, "The real code is never changed. Before scoring, each suite must pass on the unchanged code, so a failure can only come from the bug.", 0.6, 6.15, 5.2, 0.7, { size: 12, italic: true });
+  box(sc, "", 6.2, 1.45, 6.5, 4.2, { fill: "1E2A36" });
+  const mono2 = (t2, color = "D6DEE5", bold = false) => ({ text: t2, options: { fontFace: "Courier New", color, bold, fontSize: 11, breakLine: true } });
+  txt(sc, [
+    mono2("> python tools\\run_mutants.py --tests tests\\ai\\run1", "8FD3C7", true),
+    mono2(" "),
+    mono2("baseline: suite passes on the unmodified code", "8A99A6"),
+    mono2("M01_AUTH_allowed_characters    detected", "8FD3C7"),
+    mono2("M02_AUTH_password_check        detected", "8FD3C7"),
+    mono2("M04_AUTH_delete_or_change_line missed", "F2A07B"),
+    mono2("M06_ROUNDTRIP_read_returns...  detected", "8FD3C7"),
+    mono2("M13_CHUNKS_middle_chunks_full  missed", "F2A07B"),
+    mono2("M16_TAMPER_meta_digest_check   detected", "8FD3C7"),
+    mono2("M20_TAMPER_padding_check       missed", "F2A07B"),
+    mono2("...", "8A99A6"),
+    mono2(" "),
+    { text: "ai/run1:  14/20 faults detected", options: { fontFace: "Courier New", color: "F2C14E", bold: true, fontSize: 12, breakLine: true } },
+    { text: "manual:    5/20 faults detected", options: { fontFace: "Courier New", color: "F2C14E", bold: true, fontSize: 12 } },
+  ], 6.45, 1.65, 6.1, 4.8);
+  sc.addNotes("Excerpt of the real scoring output (analysis/mutants_ai_run1.csv and mutants_manual.csv). This is mutation testing: the share of seeded bugs a suite catches is its mutation score.");
+
+  // ---- headline result ----
+  const r = content("Result: AI-assisted tests caught 70% of the faults, manual 25%", SEC);
+  const big = [["25%", "manual", "5 of 20 faults", HEX.accent4], ["70%", "AI-assisted", "14 of 20 faults", HEX.accent1], ["0%", "manual extended", "0 of 20 faults", "8A99A6"]];
+  big.forEach(([n, l, sub, col], i) => {
+    const x = 0.6 + i * 2.75;
+    txt(r, n, x, 1.5, 2.6, 1.1, { size: 60, bold: true, color: col, font: THEME.headFontFace });
+    txt(r, [
+      { text: l, options: { bold: true, color: C.text1, fontSize: 16, breakLine: true } },
+      { text: sub, options: { fontSize: 14 } },
+    ], x, 2.65, 2.6, 0.8);
+  });
+  box(r, "", 8.95, 1.45, 3.75, 4.25, { fill: C.background2 });
+  txt(r, "AI-assisted vs manual", 9.2, 1.6, 3.3, 0.4, { bold: true, color: C.text1, size: 16 });
+  txt(r, [
+    { text: "Caught by both: 5", options: { breakLine: true } },
+    { text: "Only by AI-assisted: 9", options: { breakLine: true } },
+    { text: "Only by manual: 0", options: { breakLine: true } },
+    { text: "Missed by both: 6", options: { breakLine: true } },
+    { text: " ", options: { fontSize: 6, breakLine: true } },
+    { text: "Difference: +45 points", options: { bold: true, breakLine: true } },
+    { text: "95% CI +25 to +65 points", options: { breakLine: true } },
+    { text: "McNemar exact p = 0.0039", options: { bold: true, color: HEX.accent1 } },
+  ], 9.2, 2.1, 3.3, 3.4, { size: 15, psa: 4 });
+  box(r, [
+    { text: "Answer: ", options: { bold: true } },
+    { text: "in this experiment, yes. The AI-assisted suite found every fault the manual suite found, plus nine more, in less tester time. H0 is rejected (p < 0.01)." },
+  ], 0.6, 3.75, 8.0, 1.95, { fill: C.accent1, color: C.background1, size: 17, align: "left", margin: 14 });
+  txt(r, "Source: analysis/results.md (20 faults scored in every arm; bootstrap 10,000 resamples, seed 2026)", 0.6, 6.05, 12.1, 0.35, { size: 11, italic: true });
+  r.addNotes("McNemar's test uses only the faults one arm caught and the other missed: 9 versus 0. The confidence interval comes from resampling the 20 faults.");
+
+  // ---- by area (native chart) ----
+  const b = content("Detection by area: AI leads in authentication and round trips", SEC);
+  b.addChart(pres.charts.BAR, [
+    { name: "manual", labels: ["Authentication", "Round trip", "Chunk boundaries", "Tamper"], values: [0, 20, 60, 20] },
+    { name: "AI-assisted", labels: ["Authentication", "Round trip", "Chunk boundaries", "Tamper"], values: [80, 100, 60, 40] },
+    { name: "manual extended", labels: ["Authentication", "Round trip", "Chunk boundaries", "Tamper"], values: [0, 0, 0, 0] },
+  ], {
+    x: 0.6, y: 1.4, w: 7.6, h: 5.0, barDir: "col", barGrouping: "clustered", chartColors: [HEX.accent4, HEX.accent1, "B9C6D1"],
+    showTitle: true, title: "Seeded faults detected (%)", titleFontSize: 16, titleColor: HEX.dk1, titleFontFace: "+mj-lt",
+    showValue: true, dataLabelPosition: "outEnd", dataLabelFontSize: 12, dataLabelColor: HEX.dk1, dataLabelFontFace: "+mn-lt", dataLabelFormatCode: "0\"%\"",
+    catAxisLabelFontSize: 13, catAxisLabelColor: HEX.dk2, catAxisLabelFontFace: "+mn-lt",
+    valAxisMinVal: 0, valAxisMaxVal: 110, valAxisMajorUnit: 20, valAxisLabelFontSize: 11, valAxisLabelColor: HEX.dk2, valAxisLabelFormatCode: "0\"%\"",
+    valGridLine: { color: "E2E8F0", size: 0.5 }, catGridLine: { style: "none" },
+    showLegend: true, legendPos: "b", legendFontSize: 13, legendFontFace: "+mn-lt", legendColor: HEX.dk2,
+  });
+  const notes = [
+    ["Authentication 0% → 80%", "The AI systematically tried boundary lengths and odd characters; the manual suite had one registration test."],
+    ["Round trip 20% → 100%", "AI tests stored data and read it back; most manual round-trip tests ended up checking only rejected names."],
+    ["Chunk boundaries 60% = 60%", "The one area where the manual tests matched the AI."],
+    ["Tamper 20% → 40%", "Both arms damaged chunk files; neither probed sizes, lengths or padding in detail."],
+  ];
+  notes.forEach(([h, t2], i) => {
+    txt(b, [
+      { text: h, options: { bold: true, color: C.text1, fontSize: 15, breakLine: true } },
+      { text: t2, options: { fontSize: 13 } },
+    ], 8.6, 1.5 + i * 1.25, 4.1, 1.15);
+  });
+  b.addNotes("Each area has 5 faults, so one fault is 20 percentage points.");
+
+  // ---- coverage, false positives, time ----
+  const c = content("Coverage, false positives and time", SEC);
+  const rowsC = [
+    ["Faults detected", "5/20 (25%)", "14/20 (70%)", "0/20 (0%)"],
+    ["Line coverage", "70.9%", "87.7%", "36.8%"],
+    ["Branch coverage", "47.1%", "77.3%", "9.7%"],
+    ["False positives (test wrong, code right)", "5", "1", "0"],
+    ["Real defects found in the unchanged code", "0", "0", "0"],
+    ["Tester time", "160 min", "50 min", "100 min"],
+    ["Faults detected per tester hour", "1.9", "16.8", "0"],
+    ["AI prompts / tests proposed / accepted / edited / rejected", "–", "5 / 132 / 131 / 1 / 0", "–"],
+  ];
+  c.addTable([[H("Measure"), H("manual"), H("AI-assisted"), H("manual extended")], ...rowsC.map((rw, i) => rw.map((v, j) => ({
+    text: v, options: { bold: j === 0 || (j === 2 && i < 3), color: j === 2 && i < 3 ? HEX.accent1 : HEX.dk1, fill: { color: i % 2 ? "FFFFFF" : HEX.lt2 } },
+  })))], { x: 0.6, y: 1.4, w: 12.1, colW: [5.3, 2.1, 2.6, 2.1], rowH: 0.5, fontSize: 14, color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "D5DCE2" }, valign: "middle", margin: [0.04, 0.1, 0.04, 0.1] });
+  txt(c, "Times are the tester's own estimates (not timed). The AI agent's 6.5 minutes of generation are machine time and not included.", 0.6, 6.15, 12.1, 0.5, { size: 12, italic: true });
+  c.addNotes("All 6 false positives were tests that disagreed with the specification, not bugs in the code: wrong file names, a too-short password, a missing argument, an empty chunk list, and one AI miscount of a byte position.");
+
+  // ---- coverage chart + analysis figure ----
+  const g = content("Evidence from the analysis tools", SEC);
+  g.addChart(pres.charts.BAR, [
+    { name: "Line coverage", labels: ["manual", "AI-assisted", "manual ext."], values: [70.9, 87.7, 36.8] },
+    { name: "Branch coverage", labels: ["manual", "AI-assisted", "manual ext."], values: [47.1, 77.3, 9.7] },
+  ], {
+    x: 0.6, y: 1.4, w: 5.9, h: 4.6, barDir: "col", barGrouping: "clustered", chartColors: [HEX.accent1, HEX.accent2],
+    showTitle: true, title: "Code coverage of src/sefs (%)", titleFontSize: 15, titleColor: HEX.dk1, titleFontFace: "+mj-lt",
+    showValue: true, dataLabelPosition: "outEnd", dataLabelFontSize: 12, dataLabelColor: HEX.dk1, dataLabelFontFace: "+mn-lt", dataLabelFormatCode: "0\"%\"",
+    catAxisLabelFontSize: 13, catAxisLabelColor: HEX.dk2, catAxisLabelFontFace: "+mn-lt",
+    valAxisMinVal: 0, valAxisMaxVal: 110, valAxisMajorUnit: 20, valAxisLabelFontSize: 11, valAxisLabelColor: HEX.dk2, valAxisLabelFormatCode: "0\"%\"",
+    valGridLine: { color: "E2E8F0", size: 0.5 }, catGridLine: { style: "none" },
+    showLegend: true, legendPos: "b", legendFontSize: 13, legendFontFace: "+mn-lt", legendColor: HEX.dk2,
+  });
+  g.addImage({ path: "../analysis/fig_detection_by_area.png", x: 6.85, y: 1.45, w: 5.85, h: 3.29, altText: "Bar chart from analyze.py: seeded faults detected per area for each arm" });
+  txt(g, [
+    { text: "Left: ", options: { bold: true, color: C.text1 } },
+    { text: "coverage measured with coverage.py. Line coverage counts lines run at least once; branch coverage counts both outcomes of each if/else.", options: { breakLine: true } },
+    { text: "Right: ", options: { bold: true, color: C.text1 } },
+    { text: "the chart produced by analysis/analyze.py from the scoring results." },
+  ], 6.85, 4.95, 5.85, 1.5, { size: 12 });
+  txt(g, "High coverage is necessary but not sufficient: the AI suite ran 88% of the lines yet still missed 6 faults.", 0.6, 6.15, 5.9, 0.6, { size: 12, italic: true });
+  g.addNotes("Per-line coverage reports are in analysis/htmlcov_<arm>/index.html.");
+
+  // ---- faults every arm missed ----
+  const m = content("Six faults escaped every arm", SEC);
+  const missed = [
+    ["M04 · authentication", "Deleting \"bob\" also removes \"bobby\" (prefix match)"],
+    ["M13 · chunk boundaries", "A shortened middle chunk, or a wrong link, is accepted"],
+    ["M14 · chunk boundaries", "A size field of 1,025–1,076 is accepted"],
+    ["M18 · tamper", "Extra data added to the chunks is returned to the user"],
+    ["M19 · tamper", "A chunk file with bytes appended is accepted"],
+    ["M20 · tamper", "A change to the first padding byte is not noticed"],
+  ];
+  missed.forEach(([h, t2], i) => {
+    const x = 0.6 + (i % 3) * 4.13, y = 1.45 + Math.floor(i / 3) * 1.95;
+    box(m, "", x, y, 3.85, 1.75, { fill: C.background2 });
+    txt(m, h, x + 0.22, y + 0.18, 3.4, 0.4, { bold: true, color: C.accent3, size: 15 });
+    txt(m, t2, x + 0.22, y + 0.65, 3.4, 1.0, { size: 14 });
+  });
+  box(m, [
+    { text: "What they share: ", options: { bold: true } },
+    { text: "each needs a test that hand-crafts a subtly broken file (a near-match username, an edited size field, an appended byte) and checks the exact response. Even 340 AI test cases did not reach them; this is where a specialist tester adds value." },
+  ], 0.6, 5.5, 12.1, 1.05, { fill: C.text1, color: C.background1, size: 14, align: "left", margin: 12 });
+  m.addNotes("These are the strongest candidates for the next round of tests, by either method.");
+
+  // ---- intent vs delivered ----
+  const v = content("Project intent vs what we delivered", SEC);
+  const rowsV = [
+    ["Research question", "Answered for this setting: AI-assisted found more faults (70% vs 25%, p = 0.004)"],
+    ["AI proposes tests for authentication, round trips, chunk boundaries, tamper", "Done: 5 standard prompts, 132 test functions across all four areas"],
+    ["Manually validate each generated test", "Done as a 45-min group walkthrough; 1 test corrected, 131 accepted"],
+    ["Compare test coverage", "Done: 71% vs 88% lines, 47% vs 77% branches"],
+    ["Compare valid defects discovered", "Done: 5 vs 14 of 20 seeded faults; 0 real defects in the unchanged code"],
+    ["Compare false-positive failures", "Done: 5 manual vs 1 AI"],
+    ["Compare time spent", "Done (estimated): 160 min manual vs 50 min AI review"],
+    ["Retain an AI prompt/review log", "Done: logs/ai_prompt_log.csv and logs/ai_review_sheet.csv"],
+    ["Unique output: AI-assisted regression suite", "Delivered: tests/ai/run1 (340 cases, all passing on sefs-v1.0)"],
+    ["Unique output: controlled evaluation", "Delivered, with the deviations on the next slide"],
+  ];
+  v.addTable([[H("Intended"), H("Delivered")], ...rowsV.map((rw, i) => rw.map((t2, j) => ({
+    text: t2, options: { bold: j === 0, fill: { color: i % 2 ? "FFFFFF" : HEX.lt2 } },
+  })))], { x: 0.6, y: 1.35, w: 12.1, colW: [5.2, 6.9], rowH: 0.45, fontSize: 13, color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "D5DCE2" }, valign: "middle", margin: [0.03, 0.1, 0.03, 0.1] });
+  v.addNotes("Every item in the original project brief has a matching deliverable in the repository.");
+
+  // ---- threats to validity ----
+  const t = content("How far the result can be trusted", SEC);
+  const thr = [
+    ["Small study", "One tester, one AI run, 20 faults. The result describes this setting; it does not generalise on its own."],
+    ["Beginner tester", "Daniel had no IT background. An experienced tester would likely narrow the gap."],
+    ["Estimated times", "No session was timed, and the manual arm ran 40 minutes over budget."],
+    ["AI arm deviations", "An isolated Claude Opus 5.5 agent replaced the claude.ai chat; review was a group walkthrough, not test by test."],
+    ["AI help in the set-up", "Fault locations were AI-suggested and fault M01 was AI-written; test instructions and examples were AI-prepared."],
+    ["Uneven test counts", "8 manual tests vs 340 AI cases: the AI's volume is part of the effect being measured."],
+  ];
+  thr.forEach(([h, t2], i) => {
+    const x = 0.6 + (i % 2) * 6.15, y = 1.4 + Math.floor(i / 2) * 1.75;
+    box(t, "", x, y, 5.95, 1.55, { fill: C.background2 });
+    circleNum(t, "!", x + 0.2, y + 0.18, 0.42, C.accent3);
+    txt(t, h, x + 0.8, y + 0.18, 5.0, 0.42, { bold: true, color: C.text1, size: 15, valign: "middle" });
+    txt(t, t2, x + 0.2, y + 0.7, 5.6, 0.8, { size: 13 });
+  });
+  t.addNotes("Stating these openly is part of a controlled evaluation. A repeated run (ai/run2, a second tester) would strengthen the evidence.");
+
+  // ---- conclusions ----
+  const k = content("Conclusions", SEC);
+  const concl = [
+    ["AI assistance found more defects in less time", "70% vs 25% of seeded faults, 16.8 vs 1.9 faults per tester hour, significant at p = 0.004."],
+    ["Its strength is breadth", "The AI covered boundaries and odd inputs systematically: 80–100% in authentication and round trips, where the beginner wrote few tests."],
+    ["Human review still matters", "1 of 132 AI tests was wrong (a miscounted byte position) and was caught only because a person checked it."],
+    ["Neither approach is enough on its own", "6 subtle faults escaped every arm. Targeted, hand-crafted tamper and boundary tests are the next step."],
+  ];
+  concl.forEach(([h, t2], i) => {
+    const y = 1.4 + i * 1.18;
+    circleNum(k, i + 1, 0.6, y + 0.12, 0.5, C.accent1);
+    txt(k, [
+      { text: h, options: { bold: true, color: C.text1, fontSize: 17, breakLine: true } },
+      { text: t2, options: { fontSize: 14 } },
+    ], 1.3, y, 6.6, 1.1);
+  });
+  box(k, "", 8.3, 1.4, 4.4, 4.75, { fill: C.text1 });
+  txt(k, "Recommendations", 8.55, 1.6, 3.9, 0.4, { bold: true, color: HEX.accent2, size: 16 });
+  const rec = [
+    "Use AI to draft a broad regression suite, then have a person review every test against the spec",
+    "Add hand-written tests for the six missed faults",
+    "Repeat the study: a second AI run and a second tester, with every session timed",
+  ];
+  txt(k, rec.map((x, i) => ({ text: x, options: { bullet: true, breakLine: i < rec.length - 1 } })), 8.55, 2.15, 3.95, 3.8, { size: 14, color: "D6DEE5", psa: 8 });
+  txt(k, "Delivered: SEFS Parts 1–3 · a 340-case AI-assisted regression suite · a controlled evaluation with logs and analysis", 0.6, 6.25, 12.1, 0.45, { size: 13, italic: true });
+  k.addNotes("The conclusions hold for this setting (one beginner tester, one AI run, 20 faults); the threats slide lists the limits.");
+}
+
 async function build() {
   opening();
   architecture();
@@ -731,6 +1015,7 @@ async function build() {
   decisions();
   testing();
   limitations();
+  if (DONE.extension) extension();
   closing();
   await pres.writeFile({ fileName: OUT });
   await applyTheme(OUT, THEME);

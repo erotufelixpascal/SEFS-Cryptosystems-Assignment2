@@ -1,6 +1,6 @@
 # Group 6 extension: AI-assisted vs. manual test generation (25 marks)
 
-**Tests:** [`tests/manual/`](../tests/manual) · [`tests/ai/run1/`](../tests/ai/run1) · **Faults:** [`mutants/`](../mutants/README.md) · **Tools:** [`tools/`](../tools) · **Analysis:** [`analysis/analyze.py`](../analysis/analyze.py) · **Logs:** [`logs/`](../logs) · **Status:** not started
+**Tests:** [`tests/manual/`](../tests/manual) · [`tests/ai/run1/`](../tests/ai/run1) · **Faults:** [`mutants/`](../mutants/README.md) · **Tools:** [`tools/`](../tools) · **Analysis:** [`analysis/analyze.py`](../analysis/analyze.py) · **Logs:** [`logs/`](../logs) · **Status:** complete (2026-11-25). Results: [RESULTS_AND_CONCLUSIONS.md](RESULTS_AND_CONCLUSIONS.md)
 
 > Start only once the SEFS implementation passes its tests (`python -m pytest tests\acceptance tests\format` → 18 passed). The brief requires this.
 
@@ -187,10 +187,10 @@ The deliverables (Master's report, journal-style manuscript, 10-minute presentat
 
 - [x] `sefs-v1.0` tagged; acceptance + format 18/18 (2026-11-24, commit 5bab86a)
 - [x] Budget and AI tool agreed and written in section 3
-- [ ] ≥ 20 faults written and applying (fault author)
-- [ ] `tests/manual/` within budget; time and defect logs filled
-- [ ] `tests/ai/run1/` within budget; prompt, time and defect logs filled
-- [ ] Both suites pass on clean code
-- [ ] `run_mutants.py` run for each arm; no `build_error` / `run_error` left
-- [ ] Coverage measured for each arm
-- [ ] `analyze.py` run; tables and chart in the report
+- [x] ≥ 20 faults written and applying (fault author): 20, all apply
+- [x] `tests/manual/` time and defect logs filled (160 min: 40 over budget, estimated)
+- [x] `tests/ai/run1/` within budget; prompt, time and defect logs filled (50 min, estimated)
+- [x] Both suites pass on clean code (plus `manual_extended`)
+- [x] `run_mutants.py` run for each arm; no `build_error` / `run_error` left
+- [x] Coverage measured for each arm
+- [x] `analyze.py` run; tables and chart in `analysis/results.md` and the v7 slides

@@ -13,6 +13,7 @@ The on-disk format is documented byte for byte in [docs/FILE_FORMAT.md](docs/FIL
 | 3. Full multi-chunk SEFS | 45 | [docs/PART3_FULL_SEFS.md](docs/PART3_FULL_SEFS.md) |
 | 4. Cross-group interoperability | 5 | [docs/PART4_INTEROPERABILITY.md](docs/PART4_INTEROPERABILITY.md) |
 | Extension: AI-assisted test generation | +25 | [docs/EXPERIMENT.md](docs/EXPERIMENT.md) |
+| Extension: results and conclusions | | [docs/RESULTS_AND_CONCLUSIONS.md](docs/RESULTS_AND_CONCLUSIONS.md) |
 | Writing the manual test suite | | [docs/MANUAL_TESTING_GUIDE.md](docs/MANUAL_TESTING_GUIDE.md) |
 | On-disk format (reference) | | [docs/FILE_FORMAT.md](docs/FILE_FORMAT.md) |
 
