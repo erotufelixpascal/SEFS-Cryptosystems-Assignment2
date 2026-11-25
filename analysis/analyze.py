@@ -206,8 +206,9 @@ def main() -> int:
         stats.append({
             "comparison": f"{arm} vs {base}",
             "faults": len(scored),
-            f"only_{base}": b,
-            f"only_{arm}": c,
+            # Fixed column names, so rows for several comparisons share one CSV header.
+            "only_baseline": b,
+            "only_other_arm": c,
             "both": sum(1 for i in scored if caught[base][i] and caught[arm][i]),
             "neither": sum(1 for i in scored if not caught[base][i] and not caught[arm][i]),
             "score_difference": f"{100 * diff:+.1f} pts",

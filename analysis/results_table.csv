@@ -1,0 +1,4 @@
+arm,tests,faults_detected,mutation_score,score_95ci,line_coverage,branch_coverage,real_defects,false_positives,minutes,faults_per_hour,valid_findings_per_hour,ai_prompts,ai_tests_proposed,ai_accepted,ai_edited,ai_rejected,ai_review_minutes
+manual,8,5/20,25.0%,11.2%-46.9%,70.9%,47.1%,0,5,160,1.88,1.88,,,,,,
+ai/run1,340,14/20,70.0%,48.1%-85.5%,87.7%,77.3%,0,1,50,16.80,16.80,5,132,131,1,0,50
+manual_extended,5,0/20,0.0%,0.0%-16.1%,36.8%,9.7%,0,0,100,0.00,0.00,,,,,,

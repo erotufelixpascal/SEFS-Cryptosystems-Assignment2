@@ -1,0 +1,5 @@
+area,faults,manual,ai/run1,manual_extended
+authentication,5,0.0%,80.0%,0.0%
+round_trip,5,20.0%,100.0%,0.0%
+chunk_boundaries,5,60.0%,60.0%,0.0%
+tamper,5,20.0%,40.0%,0.0%

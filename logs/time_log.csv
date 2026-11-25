@@ -12,3 +12,4 @@ date,student,arm,activity,minutes
 2026-11-25,Daniel Odong,manual_extended,"writing test_roundtrip_more.py::test_write_nonexistent_file (estimated: ~20 min per test, not timed)",20
 2026-11-25,Daniel Odong,manual_extended,"writing test_roundtrip_more.py::test_decrypt_nonexistent_file (estimated: ~20 min per test, not timed)",20
 2026-11-25,Daniel Odong,ai/run1,"reviewing and fixing failing AI test test_round_trip_P-002.py::test_demo_partial_reads (estimated, not timed)",5
+2026-11-25,Daniel Odong,ai/run1,"group walkthrough reviewing all AI-generated tests (estimated, not timed)",45
