@@ -5,10 +5,6 @@ Specification: docs/ only. Fixtures: tests/conftest.py (sefs, user, workdir, chu
 Guide: docs/MANUAL_TESTING_GUIDE.md. Time is logged in logs/time_log.csv (arm = manual).
 """
 
-def test_example(sefs, user):
-    u, p = user
-    assert sefs.create_file("notes", u, p) == 1
-
 # =============================================================================
 # HOW TO USE THIS FILE  (read once, then delete these comment blocks if you like)
 # =============================================================================
@@ -54,3 +50,8 @@ def test_example(sefs, user):
 #     assert sefs.register_user(name, "___", "passwd") == expected
 
 # Write your own tests below this line.
+def test_register_user(sefs):
+    result = sefs.register_user("alice01", "Passw0rd#1", "passwd")
+    assert result == 1
+
+

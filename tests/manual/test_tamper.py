@@ -45,3 +45,47 @@ Guide: docs/MANUAL_TESTING_GUIDE.md. Time is logged in logs/time_log.csv (arm = 
 #     (workdir / "___").write_bytes(b"___")     # change another file in the folder
 
 # Write your own tests below this line.
+# def test_tamper_chunk_file(sefs, user, chunk_files):
+#     u, p = user
+#     # Arrange: store a file with sefs functions first ...
+#     #loggin the chunck size and the number of chunks
+#     print(len(chunk_files()))
+#     content = b"A" * 2024                     # exactly 2024 bytes
+#     target = chunk_files()[1]                 # pick a chunk file
+#     data = bytearray(target.read_bytes())
+#     data[0] ^= 0x01                         # flip one bit at position 0
+#     target.write_bytes(data)
+#     # Act + Assert:
+#     assert sefs.check_file_integrity("test_file", u, p) == -1
+
+def _store_two_chunks(sefs, u, p, chunk_files):
+    """Create 'notes' with 2,024 bytes (2 chunks) and return the chunk files."""
+    assert sefs.create_file("notes", u, p) == sefs.OK
+    assert sefs.write_to_file("notes", 0, b"A" * 2024, u, p) == sefs.OK
+    files = chunk_files()
+    assert len(files) == 2
+    assert sefs.file_integrity_check("notes", u, p) == sefs.OK
+    return files
+
+
+def test_tamper_chunk_file(sefs, user, chunk_files):
+    u, p = user
+    target = _store_two_chunks(sefs, u, p, chunk_files)[1]
+    data = bytearray(target.read_bytes())
+    data[0] ^= 0x01                                   # flip one bit
+    target.write_bytes(data)
+    assert sefs.file_integrity_check("notes", u, p) == sefs.ERR
+
+
+def test_deleted_chunk_file(sefs, user, chunk_files):
+    u, p = user
+    target = _store_two_chunks(sefs, u, p, chunk_files)[1]
+    target.unlink()                                   # delete a chunk
+    assert sefs.file_integrity_check("notes", u, p) == sefs.ERR
+
+
+def test_extra_bytes_appended(sefs, user, chunk_files):
+    u, p = user
+    target = _store_two_chunks(sefs, u, p, chunk_files)[1]
+    target.write_bytes(target.read_bytes() + b"HelloWorld")   # add bytes at the end
+    assert sefs.file_integrity_check("notes", u, p) == sefs.ERR

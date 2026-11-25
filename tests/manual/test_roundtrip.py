@@ -52,3 +52,26 @@ Guide: docs/MANUAL_TESTING_GUIDE.md. Time is logged in logs/time_log.csv (arm = 
 #     assert sefs.read_from_file("___", ___, ___, u, p) is None
 
 # Write your own tests below this line.
+# Rule (from docs/PART2_SIMPLIFIED_SEFS.md): ___
+def test_roundtrip(sefs, user):
+    u, p = user
+    assert sefs.create_file("test_file", u, p) == -1
+    assert sefs.write_to_file("test_file", 0, b"Hello_World", u, p) == -1
+    # assert sefs.read_from_file("test_file", 0, 11, u, p) == b"Hello_World"
+    assert sefs.read_from_file("test_file", 0, 11, u, p) == None
+
+# ---- SHAPE 2: encrypt a plaintext file that is on disk ----------------------
+from pathlib import Path
+
+# Rule: ___
+def test_encrypt_file(sefs, user):
+    u, p = user
+    Path("plaintext.txt").write_bytes(b"Hello_World")          # make the plaintext file first
+    assert sefs.encrypt_file("plaintext.txt", u, p) == -1
+    assert sefs.decrypt_file("plaintext", "plaintext.txt", u, p)  == -1
+
+# ---- SHAPE 3: a function that should FAIL -----------------------------------
+# Rule: ___
+def test_read_nonexistent_file(sefs, user):
+    u, p = user
+    assert sefs.read_from_file("nonexistent.txt", 0, 11, u, p) is None

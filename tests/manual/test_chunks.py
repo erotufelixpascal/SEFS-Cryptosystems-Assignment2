@@ -48,3 +48,8 @@ Guide: docs/MANUAL_TESTING_GUIDE.md. Time is logged in logs/time_log.csv (arm = 
 #     assert ___ == expected
 
 # Write your own tests below this line.
+def test_chunk_boundaries(sefs, user, chunk_files):
+    u, p = user
+    content = b"A" * 2024                     # exactly 2024 bytes
+    # ... store it with sefs functions ...
+    assert len(chunk_files()) == 0         # how many chunk files the spec says
