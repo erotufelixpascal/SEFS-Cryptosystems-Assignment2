@@ -7,6 +7,7 @@
 | `Group 6 SEFS Progress v6.pptx` | Earlier deck: Parts 1–3, security goals (CIA) |
 | `Group 6 SEFS Progress v5.pptx` | Earlier deck: Parts 1 and 2 |
 | `Group 6 SEFS Progress v4.pptx` | Previous progress review, kept for reference |
+| `Group 6 SEFS Summary (10 slides).pptx` (+ `.pdf`) | Short version: the 10 most important slides of v8. Rebuild with `python make_summary.py` (needs python-pptx) |
 | `build_slides.js` | Generates the current deck. Edit this, not the .pptx |
 
 ## Updating the deck when a part is finished
