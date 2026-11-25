@@ -2,7 +2,8 @@
 
 | File | What it is |
 |---|---|
-| `Group 6 SEFS Progress v7.pptx` | Current deck: Parts 1–3, security goals (CIA), extension experiment, results and conclusions |
+| `Group 6 SEFS Progress v8.pptx` (+ `.pdf`) | Current deck (42 slides): full system design and flow, Parts 1–3, security goals (CIA), extension experiment, results and conclusions. Built without layout placeholders or theme colours, so it displays the same in PowerPoint, WPS Office and previews |
+| `Group 6 SEFS Progress v7.pptx` (+ `.pdf`) | Earlier deck |
 | `Group 6 SEFS Progress v6.pptx` | Earlier deck: Parts 1–3, security goals (CIA) |
 | `Group 6 SEFS Progress v5.pptx` | Earlier deck: Parts 1 and 2 |
 | `Group 6 SEFS Progress v4.pptx` | Previous progress review, kept for reference |

@@ -11,7 +11,7 @@ const pptxgen = require("pptxgenjs");
 const { applyTheme } = require("./apply_theme.js");
 
 // Bump the version number each time the deck is reissued (v4 was the previous progress review).
-const OUT = "Group 6 SEFS Progress v7.pptx";
+const OUT = "Group 6 SEFS Progress v8.pptx";
 
 const TEAM = [
   ["Pascal Felix Erotu", "MAY26/MAIDS/0056U"],
@@ -59,57 +59,70 @@ pres.layout = "LAYOUT_WIDE"; // 13.333 x 7.5 in
 pres.author = "Group 6";
 pres.title = "SEFS: Secure Encrypted File System";
 pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
-const C = pres.SchemeColor;
+// Explicit hex colours (not theme references) so every viewer, including WPS Office and
+// previews, shows the same colours.
+const C = {
+  text1: HEX.dk1, text2: HEX.dk2, background1: "FFFFFF", background2: HEX.lt2,
+  accent1: HEX.accent1, accent2: HEX.accent2, accent3: HEX.accent3,
+  accent4: HEX.accent4, accent5: HEX.accent5, accent6: HEX.accent6,
+};
 const SH = pres.shapes;
 
 // ---------- layouts ----------
 pres.defineSlideMaster({
   title: "TITLE",
   background: { color: DARK_BG },
-  objects: [
-    { placeholder: { options: { name: "title", type: "title", x: 0.7, y: 1.5, w: 11.9, h: 1.5, fontSize: 44, bold: true, color: C.background1, fontFace: THEME.headFontFace, valign: "bottom", align: "left", margin: 0 }, text: "" } },
-    { placeholder: { options: { name: "body", type: "body", x: 0.7, y: 3.15, w: 11.9, h: 0.7, fontSize: 22, color: "B9C6D1", margin: 0 }, text: "" } },
-  ],
 });
 pres.defineSlideMaster({
   title: "SECTION",
   background: { color: DARK_BG },
-  objects: [
-    { placeholder: { options: { name: "kicker", type: "body", x: 0.7, y: 2.3, w: 6, h: 0.6, fontSize: 20, bold: true, color: HEX.accent1, margin: 0 }, text: "" } },
-    { placeholder: { options: { name: "title", type: "title", x: 0.7, y: 2.95, w: 11.9, h: 1.2, fontSize: 40, bold: true, color: C.background1, fontFace: THEME.headFontFace, valign: "top", align: "left", margin: 0 }, text: "" } },
-  ],
-  slideNumber: { x: 12.3, y: 6.95, w: 0.6, h: 0.3, fontSize: 10, color: "8A99A6" },
 });
 pres.defineSlideMaster({
   title: "CONTENT",
   background: { color: "FFFFFF" },
-  objects: [
-    { placeholder: { options: { name: "title", type: "title", x: 0.6, y: 0.35, w: 12.1, h: 0.85, fontSize: 30, bold: true, color: C.text1, fontFace: THEME.headFontFace, valign: "middle", align: "left", margin: 0 }, text: "" } },
-    { text: { text: "Group 6 · SEFS Cryptosystems Project", options: { x: 0.6, y: 6.95, w: 8, h: 0.3, fontSize: 11, color: "6B7A88", margin: 0 } } },
-  ],
-  slideNumber: { x: 12.3, y: 6.95, w: 0.6, h: 0.3, fontSize: 10, color: "8A99A6" },
 });
 
 // ---------- helpers ----------
 let section = null;
+let slideNo = 0;
 function newSlide(master, sectionTitle) {
   if (sectionTitle && sectionTitle !== section) {
     pres.addSection({ title: sectionTitle });
     section = sectionTitle;
   }
-  return pres.addSlide({ masterName: master, sectionTitle: section });
+  const sl = pres.addSlide({ masterName: master, sectionTitle: section });
+  sl.background = { color: master === "CONTENT" ? "FFFFFF" : DARK_BG };
+  slideNo += 1;
+  if (master !== "TITLE") {
+    // Footer and page number as plain text on the slide itself (no layout fields).
+    if (master === "CONTENT") sl.addText("Group 6 · SEFS Cryptosystems Project", { isTextBox: true, x: 0.6, y: 6.95, w: 8, h: 0.3, fontSize: 11, color: "6B7A88", margin: 0 });
+    sl.addText(String(slideNo), { isTextBox: true, x: 12.1, y: 6.95, w: 0.6, h: 0.3, fontSize: 10, color: "8A99A6", align: "right", margin: 0 });
+  }
+  return sl;
+}
+// Titles are ordinary text boxes, not layout placeholders, so no viewer shows them empty.
+function titleText(s, text, o) {
+  s.addText(text, { isTextBox: true, margin: 0, bold: true, fontFace: THEME.headFontFace, align: "left", ...o });
 }
 function content(title, sectionTitle) {
   const s = newSlide("CONTENT", sectionTitle);
-  s.addText(title, { placeholder: "title" });
+  titleText(s, title, { x: 0.6, y: 0.35, w: 12.1, h: 0.85, fontSize: 30, color: HEX.dk1, valign: "middle" });
   return s;
 }
-function divider(kicker, title, sectionTitle) {
+// Section opener: number, title, and a short "in this section" list (no empty decoration).
+function divider(kicker, title, sectionTitle, agenda = []) {
   const s = newSlide("SECTION", sectionTitle);
-  s.addText(kicker, { placeholder: "kicker" });
-  s.addText(title, { placeholder: "title" });
-  // motif: three linked chunk blocks
-  chunkChain(s, 0.7, 4.75, 0.9, "4B5C6B", "8A99A6");
+  s.addText(kicker, { isTextBox: true, x: 0.7, y: 1.3, w: 6, h: 0.6, margin: 0, fontSize: 20, bold: true, color: HEX.accent1 });
+  titleText(s, title, { x: 0.7, y: 1.9, w: 11.9, h: 1.2, fontSize: 40, color: "FFFFFF", valign: "top" });
+  if (agenda.length) {
+    s.addText("In this section", { isTextBox: true, x: 0.7, y: 3.45, w: 6, h: 0.4, margin: 0, fontSize: 16, bold: true, color: HEX.accent2 });
+    const half = Math.ceil(agenda.length / 2);
+    [agenda.slice(0, half), agenda.slice(half)].forEach((col, c) => {
+      if (!col.length) return;
+      s.addText(col.map((a, i) => ({ text: a, options: { bullet: true, breakLine: i < col.length - 1 } })),
+        { isTextBox: true, x: 0.7 + c * 6.0, y: 3.95, w: 5.8, h: 2.6, margin: 0, fontSize: 16, color: "D6DEE5", valign: "top", paraSpaceAfter: 8 });
+    });
+  }
   return s;
 }
 function chunkChain(s, x, y, w, fill, lineColor) {
@@ -158,8 +171,8 @@ const hd = (head, detail, dsize = 12) => [
 function opening() {
   const s = newSlide("TITLE", "Overview");
   s.addText("CRYPTOSYSTEMS · GROUP 6 · PROGRESS UPDATE", { x: 0.7, y: 1.0, w: 11.9, h: 0.45, isTextBox: true, margin: 0, fontSize: 18, bold: true, color: HEX.accent2, charSpacing: 3 });
-  s.addText("SEFS: a Secure Encrypted File System, built and verified part by part", { placeholder: "title" });
-  s.addText("Pure Python implementation · November 2026", { placeholder: "body" });
+  titleText(s, "SEFS: a Secure Encrypted File System, built and verified part by part", { x: 0.7, y: 1.5, w: 11.9, h: 1.5, fontSize: 44, color: "FFFFFF", valign: "bottom" });
+  s.addText("Pure Python implementation · November 2026", { isTextBox: true, x: 0.7, y: 3.15, w: 11.9, h: 0.7, margin: 0, fontSize: 22, color: "B9C6D1" });
   const th = (t2) => ({ text: t2, options: { bold: true, color: "FFFFFF", fill: { color: HEX.accent1 } } });
   s.addTable([[th("Name"), th("Reg Number")], ...TEAM.map((r, i) => r.map((c) => ({ text: c, options: { bold: true, color: HEX.dk1, fill: { color: i % 2 ? "E7EEEF" : "CFDCDE" } } })))], {
     x: 0.7, y: 4.4, w: 7.2, colW: [3.6, 3.6], rowH: 0.48, fontSize: 18, border: { type: "solid", pt: 1, color: "FFFFFF" }, valign: "middle", margin: [0.04, 0.12, 0.04, 0.12],
@@ -191,7 +204,8 @@ function opening() {
 // ARCHITECTURE
 // ======================================================================
 function architecture() {
-  divider("01", "System architecture and flow", "Architecture");
+  divider("01", "System architecture and flow", "Architecture", ["System context and threat model", "Layered module design", "Data model: how the files fit together", "Key hierarchy: which secret protects what", "The checks every file call passes", "End-to-end write and read flows", "The fourteen functions at a glance", "Security goals (CIA) and how they are met"]);
+  slideContext();
 
   const s = content("Layered design: one module per responsibility", "Architecture");
   box(s, hd("Python API", "import sefs"), 0.6, 1.5, 4.0, 0.8, { fill: C.accent4, color: C.background1, size: 15 });
@@ -221,6 +235,9 @@ function architecture() {
   });
   s.addNotes("Each module has one job. fs.py orchestrates; it asks auth.py to check the password, chunk.py and meta.py to read and write encrypted structures, and crypto.py for primitives. All format constants are in config.py, so a format decision changes one line.");
 
+  slideDataModel();
+  slideKeys();
+
   // ---- system flow ----
   const f = content("Every file call passes the same checks before it acts", "Architecture");
   const steps = [
@@ -249,13 +266,15 @@ function architecture() {
     { text: "the system fails closed. No data is decrypted, returned or rewritten until identity, ownership and integrity have all been proven." },
   ], 0.6, 5.9, 12.1, 0.7, { size: 15 });
   f.addNotes("This is the internal _authorize path in fs.py. The order matters: cheap input checks first, then the password, then the integrity of the meta file and chunks, and only then the operation. The final save is atomic.");
+  slideFlows();
+  slideFunctions();
 }
 
 // ======================================================================
 // PART 1
 // ======================================================================
 function part1() {
-  divider("02", "Part 1 · User authentication", "Part 1");
+  divider("02", "Part 1 · User authentication", "Part 1", ["How passwords are stored: salt + slow hash", "Why each safeguard was chosen", "Simulation: the life of one account", "Recorded demonstration (logs/part_1_log)"]);
 
   const s = content("Passwords are never stored, only a salt and a slow hash", "Part 1");
   txt(s, "One line of the passwd file", 0.6, 1.4, 6, 0.35, { size: 14, bold: true, color: C.text1 });
@@ -317,7 +336,7 @@ function part1() {
 // PART 2
 // ======================================================================
 function part2() {
-  divider("03", "Part 2 · Simplified SEFS", "Part 2");
+  divider("03", "Part 2 · Simplified SEFS", "Part 2", ["File format: meta file + 1,076-byte chunk", "Simulation: encrypt_file step by step", "Reads verify integrity before decrypting", "Live demo: 15 of 15 calls as expected", "Proof on disk: only ciphertext"]);
 
   // ---- on-disk format ----
   const s = content("One file = an encrypted meta file plus a 1,076-byte chunk", "Part 2");
@@ -465,7 +484,7 @@ function part2() {
 // PART 3 (shown once DONE.part3 is true)
 // ======================================================================
 function part3() {
-  divider("04", "Part 3 · Full multi-chunk SEFS", "Part 3");
+  divider("04", "Part 3 · Full multi-chunk SEFS", "Part 3", ["Large files as linked chunk chains", "The chunk-count rule and cross-boundary reads", "Simulation: a safe insert", "Tampering simulation: every attack caught"]);
 
   const s = content("Large files become a linked chain of chunks", "Part 3");
   box(s, hd("report.meta", "start A · end C · 3 chunks · 2,548 B", 12), 0.6, 1.55, 2.5, 1.05, { fill: C.accent6, color: C.background1, size: 15 });
@@ -547,7 +566,7 @@ function part3() {
 // DECISIONS, TESTING, LIMITATIONS, CLOSE
 // ======================================================================
 function decisions() {
-  divider("05", "Design decisions and justification", "Decisions");
+  divider("05", "Design decisions and justification", "Decisions", ["Cryptographic choices and why", "Engineering choices and why", "Verification: automated tests", "Known limitations, stated openly"]);
 
   const s = content("Cryptographic choices and why", "Decisions");
   const rows = [
@@ -643,8 +662,8 @@ function limitations() {
 
 function closing() {
   const s = newSlide("TITLE", "Next steps");
-  s.addText("Summary and next steps", { placeholder: "title" });
-  s.addText("Updated as each part is completed", { placeholder: "body" });
+  titleText(s, "Summary and next steps", { x: 0.7, y: 1.5, w: 11.9, h: 1.5, fontSize: 44, color: "FFFFFF", valign: "bottom" });
+  s.addText("Parts 1–3 and the extension complete; Part 4 next", { isTextBox: true, x: 0.7, y: 3.15, w: 11.9, h: 0.7, margin: 0, fontSize: 22, color: "B9C6D1" });
   const done = [
     "Parts 1–3 built, tested (18/18) and demonstrated (52/52 checks)",
     "Salted, slow password hashes; per-chunk encryption verified before decryption",
@@ -660,6 +679,165 @@ function closing() {
   txt(s, "Next", 6.95, 4.2, 5.7, 0.4, { bold: true, color: HEX.accent2, size: 18 });
   txt(s, next.map((d, i) => ({ text: d, options: { bullet: true, breakLine: i < next.length - 1 } })), 6.95, 4.7, 5.7, 2.2, { size: 15, color: "D6DEE5", psa: 6 });
   s.addNotes("Close on what is proven so far and what comes next. This slide's 'Next' list updates automatically from the DONE flags in build_slides.js.");
+}
+
+// ======================================================================
+// SYSTEM DESIGN AND FLOW (extra architecture slides)
+// ======================================================================
+function slideContext() {
+  const s = content("System context: who uses SEFS, and who it defends against", "Architecture");
+  const row = [
+    ["User", "e.g. alice01, with a password", C.accent4],
+    ["Python API / CLI", "import sefs · python -m sefs", C.accent4],
+    ["SEFS", "auth.py + fs.py: every call checks password, owner, integrity", C.accent1],
+    ["Working folder", "passwd, master.key, masterlist,\nmeta files, chunks/", C.text1],
+  ];
+  row.forEach(([h, t2, col], i) => {
+    const x = 0.6 + i * 3.1;
+    box(s, hd(h, t2, 12), x, 1.45, 2.8, 1.1, { fill: col, color: C.background1, size: 15 });
+    if (i < 3) arrow(s, x + 2.83, 2.0, x + 3.07, 2.0);
+  });
+  box(s, hd("Attacker with access to the folder", "reads, edits, deletes or swaps files on disk", 12), 9.9, 3.0, 2.8, 1.0, { fill: C.accent3, color: C.background1, size: 14 });
+  arrow(s, 11.3, 2.97, 11.3, 2.6, HEX.accent3);
+  box(s, hd("Another valid user", "logged in, but not the file's owner", 12), 6.8, 3.0, 2.8, 1.0, { fill: C.accent3, color: C.background1, size: 14 });
+  arrow(s, 8.2, 2.97, 8.2, 2.6, HEX.accent3);
+  txt(s, "Defended (in scope)", 0.6, 4.3, 6, 0.4, { bold: true, color: C.accent1, size: 16 });
+  const inS = [
+    "Reading file contents on disk → everything stored is encrypted",
+    "Editing, swapping or deleting chunks or meta files → HMACs, digest and chain checks",
+    "Using someone else's files → password check plus owner check",
+    "A crash in the middle of a save → atomic writes keep the last good version",
+  ];
+  txt(s, inS.map((x, i) => ({ text: x, options: { bullet: true, breakLine: i < inS.length - 1 } })), 0.6, 4.75, 6.4, 2.0, { size: 13, color: C.text1, psa: 4 });
+  txt(s, "Not defended (out of scope)", 7.3, 4.3, 5.4, 0.4, { bold: true, color: C.accent3, size: 16 });
+  const outS = [
+    "An attacker who also has master.key",
+    "Data in memory while SEFS is running",
+    "Deleting everything (denial of service)",
+    "File names, visible in the plaintext masterlist",
+  ];
+  txt(s, outS.map((x, i) => ({ text: x, options: { bullet: true, breakLine: i < outS.length - 1 } })), 7.3, 4.75, 5.4, 2.0, { size: 13, color: C.text1, psa: 4 });
+  s.addNotes("The threat model: SEFS protects data at rest against someone who can read and change the files in the folder, and against other users of the same system. Keeping master.key safe is outside the scope of the assignment.");
+}
+
+function slideDataModel() {
+  const s = content("Data model: how the stored files fit together", "Architecture");
+  box(s, hd("masterlist", "report → SHA-256(report.meta)", 12), 0.6, 1.45, 2.7, 0.95, { fill: C.background2, size: 15 });
+  arrow(s, 3.33, 1.925, 3.67, 1.925);
+  txt(s, "digest", 3.3, 1.55, 0.4, 0.3, { size: 10, align: "center" });
+  box(s, hd("report.meta", "owner, count, size, start/end\nname + key + HMAC per chunk", 11), 3.7, 1.45, 3.1, 0.95, { fill: C.text1, color: C.background1, size: 15 });
+  arrow(s, 6.83, 1.925, 7.17, 1.925);
+  ["A", "B", "C"].forEach((n, i) => {
+    const x = 7.2 + i * 1.6;
+    box(s, hd(`chunk ${n}`, "1,076 B", 11), x, 1.45, 1.3, 0.95, { fill: C.accent4, color: C.background1, size: 14 });
+    arrow(s, x + 1.33, 1.925, x + 1.57, 1.925);
+  });
+  txt(s, "NULL", 12.0, 1.45, 0.7, 0.95, { bold: true, size: 14, color: C.text1, valign: "middle" });
+  box(s, hd("master.key", "16-byte key + 16-byte IV", 12), 3.95, 2.85, 2.6, 0.85, { fill: C.accent2, color: C.background1, size: 14 });
+  arrow(s, 5.25, 2.82, 5.25, 2.43, HEX.accent2);
+  txt(s, "decrypts every meta file", 5.4, 2.5, 2.4, 0.3, { size: 11 });
+  box(s, hd("passwd", "alice01:salt:hash\nchecked on every call", 12), 0.6, 2.85, 2.7, 0.85, { fill: C.background2, size: 14 });
+  txt(s, "The meta file's owner must equal the logged-in user", 0.6, 3.75, 3.3, 0.4, { size: 11, italic: true });
+  const H = (t2) => ({ text: t2, options: { bold: true, color: C.background1, fill: { color: C.text1 } } });
+  const rows = [
+    ["passwd", "username, 32-byte salt, PBKDF2 hash", "one-way hash: no password to steal"],
+    ["master.key", "master key and IV", "file permissions only (a stated limitation)"],
+    ["masterlist", "file name + SHA-256 of its meta file", "plaintext; the digest exposes edited meta files"],
+    ["<name>.meta", "owner, chunk count, size, start/end, each chunk's name, key and HMAC", "AES-128-CTR under the master key"],
+    ["chunks/<32 hex>", "IV + encrypted (next name, size, 1,024 B content)", "AES-128-CTR under its own key; HMAC kept in the meta"],
+  ];
+  s.addTable([[H("File"), H("Holds"), H("Protected by")], ...rows.map((r, i) => r.map((c, j) => ({
+    text: c, options: { bold: j === 0, fontFace: j === 0 ? "Courier New" : undefined, fill: { color: i % 2 ? "FFFFFF" : HEX.lt2 } },
+  })))], { x: 0.6, y: 4.2, w: 12.1, colW: [2.2, 5.3, 4.6], rowH: 0.4, fontSize: 12, color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "D5DCE2" }, valign: "middle", margin: [0.03, 0.1, 0.03, 0.1] });
+  s.addNotes("Every stored file has one job. The masterlist anchors the meta files, each meta file anchors its chunks, and the master key opens the meta files. Nothing about a file can change without one of these links breaking.");
+}
+
+function slideKeys() {
+  const s = content("Key hierarchy: which secret protects what", "Architecture");
+  const chains = [
+    ["User password", "PBKDF2-HMAC-SHA1 · own 32-byte salt · 20,000 rounds", "Stored hash in passwd: login check only, never used to encrypt", C.accent4],
+    ["master.key (key + IV)", "AES-128-CTR", "Every .meta file, which holds all chunk keys and HMACs", C.accent2],
+    ["Chunk key (random, new every write)", "AES-128-CTR with a random IV", "That chunk's next name, size and content", C.accent1],
+    ["Chunk key (same)", "HMAC-SHA256 over IV + ciphertext", "That chunk's tag, stored in the encrypted meta", C.accent1],
+    ["No key", "SHA-256 of the stored meta bytes", "The meta digest in the masterlist", "8A99A6"],
+  ];
+  txt(s, "Secret", 0.6, 1.3, 3.3, 0.3, { bold: true, size: 13, color: C.text1 });
+  txt(s, "Algorithm", 4.4, 1.3, 3.6, 0.3, { bold: true, size: 13, color: C.text1 });
+  txt(s, "Protects", 8.5, 1.3, 4.2, 0.3, { bold: true, size: 13, color: C.text1 });
+  chains.forEach(([a, b, c, col], i) => {
+    const y = 1.7 + i * 0.86;
+    box(s, a, 0.6, y, 3.3, 0.7, { fill: col, color: C.background1, bold: true, size: 14 });
+    arrow(s, 3.93, y + 0.35, 4.37, y + 0.35);
+    box(s, b, 4.4, y, 3.6, 0.7, { fill: C.background2, size: 13 });
+    arrow(s, 8.03, y + 0.35, 8.47, y + 0.35);
+    box(s, c, 8.5, y, 4.2, 0.7, { fill: C.background2, size: 13, align: "left", margin: 8 });
+  });
+  box(s, [
+    { text: "What a leak costs: ", options: { bold: true } },
+    { text: "a leaked chunk key exposes one chunk version only, because the next write uses a new key. A leaked master.key exposes every meta file, and therefore every chunk key, which is why it is the most sensitive file." },
+  ], 0.6, 6.05, 12.1, 0.75, { fill: C.text1, color: C.background1, size: 13, align: "left", margin: 10 });
+  s.addNotes("Two separate concerns: the password proves who you are (authentication), and the keys keep data secret and tamper-evident (confidentiality and integrity). The password is never used as an encryption key.");
+}
+
+function slideFlows() {
+  const s = content("End-to-end flows: writing and reading a file", "Architecture");
+  const write = [
+    ["Check user", "password + owner"], ["Verify chain", "HMACs, then decrypt"], ["Insert bytes", "later content shifts"],
+    ["Split", "1,024-byte blocks"], ["Encrypt", "new key + IV, HMAC"], ["Save meta", "atomic + masterlist"], ["Clean up", "delete old chunks"],
+  ];
+  const read = [
+    ["Check user", "password + owner"], ["Meta digest", "matches masterlist?"], ["HMAC each chunk", "before decrypting"],
+    ["Decrypt", "chunks in order"], ["Check chain", "links, count, size"], ["Return", "requested bytes"],
+  ];
+  const lane = (label, steps, y, col) => {
+    txt(s, label, 0.6, y, 12, 0.4, { bold: true, color: col, size: 16 });
+    const n = steps.length, gap = 0.26, w = (12.1 - gap * (n - 1)) / n;
+    steps.forEach(([h, t2], i) => {
+      const x = 0.6 + i * (w + gap);
+      box(s, hd(h, t2, 11), x, y + 0.45, w, 1.15, { fill: i === n - 1 ? col : C.background2, color: i === n - 1 ? C.background1 : C.text1, size: 13 });
+      if (i < n - 1) arrow(s, x + w + 0.02, y + 1.025, x + w + gap - 0.02, y + 1.025);
+    });
+  };
+  lane("write_to_file(f, position, data, u, p)", write, 1.35, HEX.accent1);
+  lane("read_from_file(f, position, length, u, p)", read, 3.35, HEX.accent4);
+  box(s, [
+    { text: "Shared rule: ", options: { bold: true } },
+    { text: "both paths use the same checks, in the same order. Any failure stops at once with -1 (or None for reads), before data is changed or returned. Only the final atomic save makes a write visible." },
+  ], 0.6, 5.45, 12.1, 0.95, { fill: C.background2, size: 14, align: "left", margin: 12 });
+  s.addNotes("encrypt_file and decrypt_file follow the same two paths: encrypt starts at Split with data from a plaintext file; decrypt runs the whole read path and writes the result to a file instead of returning it.");
+}
+
+function slideFunctions() {
+  const s = content("The fourteen functions at a glance", "Architecture");
+  const H = (t2) => ({ text: t2, options: { bold: true, color: C.background1, fill: { color: C.text1 } } });
+  const group = (t2) => [{ text: t2, options: { bold: true, color: C.background1, fill: { color: C.accent1 }, colspan: 3 } }];
+  const f = (name, what, ret, i) => [
+    { text: name, options: { fontFace: "Courier New", bold: true, fill: { color: i % 2 ? "FFFFFF" : HEX.lt2 } } },
+    { text: what, options: { fill: { color: i % 2 ? "FFFFFF" : HEX.lt2 } } },
+    { text: ret, options: { fill: { color: i % 2 ? "FFFFFF" : HEX.lt2 } } },
+  ];
+  const p1 = [
+    ["register_user(u, p, pFile)", "Add a user with a fresh salt and hash", "1 / -1"],
+    ["delete_user(u, p, pFile)", "Remove a user, only with the right password", "1 / -1"],
+    ["is_user_valid(u, pFile)", "Does this username exist?", "1 / -1"],
+    ["match_user(u, p, pFile)", "Login: re-hash and compare in constant time", "1 / -1"],
+    ["change_user_password(u, p, pn, pFile)", "New password with a fresh salt, only with the old one", "1 / -1"],
+  ];
+  const p2 = [
+    ["create_file(f, u, p)", "New empty file: one chunk, size 0", "1 / -1"],
+    ["encrypt_file(f, u, p)", "Store a plaintext file from disk, encrypted", "1 / -1"],
+    ["decrypt_file(f, pf, u, p)", "Verify, then write the plaintext to file pf", "1 / -1"],
+    ["read_from_file(f, pos, n, u, p)", "n bytes from pos, after full verification", "bytes / None"],
+    ["write_to_file(f, pos, data, u, p)", "Insert data at pos, re-encrypt with fresh keys", "1 / -1"],
+    ["file_size(f, u, p)", "Size from the verified meta file", "size / -1"],
+    ["file_integrity_check(f, u, p)", "Recheck digest, every HMAC and every link", "1 / -1"],
+    ["delete_file(f, u, p)", "Owner only: remove chunks, meta and list entry", "1 / -1"],
+    ["system_health_check(u, p)", "Integrity-check every file in the masterlist", "1 / -1"],
+  ];
+  const rows = [[H("Function"), H("What it does"), H("Returns")], group("Part 1 · authentication (auth.py)"),
+    ...p1.map((r, i) => f(...r, i)), group("Parts 2–3 · encrypted files (fs.py)"), ...p2.map((r, i) => f(...r, i))];
+  s.addTable(rows, { x: 0.6, y: 1.3, w: 12.1, colW: [4.4, 5.9, 1.8], rowH: 0.31, fontSize: 12, color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "D5DCE2" }, valign: "middle", margin: [0.02, 0.08, 0.02, 0.08] });
+  s.addNotes("Every file function starts with the Part 1 password check, so authentication is built into all of Parts 2 and 3.");
 }
 
 // ======================================================================
@@ -726,7 +904,7 @@ function securityGoals() {
 // ======================================================================
 function extension() {
   const SEC = "Extension";
-  divider("06", "Extension · AI-assisted vs manual test generation", SEC);
+  divider("06", "Extension · AI-assisted vs manual test generation", SEC, ["Research question and fair design", "The three arms and the 20 seeded faults", "How scoring works", "Results: detection, coverage, time", "Faults every arm missed", "Intent vs delivered", "Threats to validity", "Conclusions and recommendations"]);
 
   // ---- research question and design ----
   const d = content("The question, and how we tested it fairly", SEC);
