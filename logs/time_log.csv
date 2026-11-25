@@ -6,3 +6,8 @@ date,student,arm,activity,minutes
 2026-11-25,Daniel Odong,manual,"writing and fixing test_roundtrip.py::test_read_nonexistent_file (estimated: ~20 min per test, not timed)",20
 2026-11-25,Daniel Odong,manual,"writing and fixing test_tamper.py::test_tamper_chunk_file (estimated: ~20 min per test, not timed)",20
 2026-11-25,Daniel Odong,manual,"writing test_tamper.py::test_deleted_chunk_file and test_extra_bytes_appended, over budget (estimated from his ~20 min per test)",40
+2026-11-25,Daniel Odong,manual_extended,"writing test_auth_more.py::test_register_user_invalid (estimated: ~20 min per test, not timed)",20
+2026-11-25,Daniel Odong,manual_extended,"writing test_auth_more.py::test_register_user_existing (estimated: ~20 min per test, not timed)",20
+2026-11-25,Daniel Odong,manual_extended,"writing test_auth_more.py::test_match_user (estimated: ~20 min per test, not timed)",20
+2026-11-25,Daniel Odong,manual_extended,"writing test_roundtrip_more.py::test_write_nonexistent_file (estimated: ~20 min per test, not timed)",20
+2026-11-25,Daniel Odong,manual_extended,"writing test_roundtrip_more.py::test_decrypt_nonexistent_file (estimated: ~20 min per test, not timed)",20
