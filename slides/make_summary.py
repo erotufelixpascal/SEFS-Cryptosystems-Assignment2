@@ -27,7 +27,7 @@ KEEP = [
     "Methodology",
     "Result: AI-assisted",
     "Results in full",
-    "Detection by area",
+    "Project intent vs what we delivered",
     "Conclusions",
 ]
 

@@ -1143,7 +1143,13 @@ function extension() {
   fr.addShape(SH.RECTANGLE, { x: 2.1, y: 5.9, w: 0.3, h: 0.22, fill: { color: "E4E9ED" }, line: { color: "C9D2DA" } });
   txt(fr, "missed", 2.48, 5.86, 1.2, 0.3, { size: 12 });
   txt(fr, "Every manual catch was also an AI catch. Six faults (M04, M13, M14, M18, M19, M20) were missed by all three arms.", 3.7, 5.86, 9.0, 0.5, { size: 12, italic: true });
-  txt(fr, "Source: analysis/results.md, produced by analysis/analyze.py from the scoring runs (95% CI = Wilson interval of the detection rate)", 0.6, 6.4, 12.1, 0.3, { size: 10, italic: true });
+  txt(fr, [
+    { text: "AI prompt/review log: ", options: { bold: true, color: C.text1 } },
+    { text: "5 prompts · 132 tests proposed · 131 accepted · 1 edited · 0 rejected (logs/ai_prompt_log.csv).   " },
+    { text: "Real defects in the unchanged code: ", options: { bold: true, color: C.text1 } },
+    { text: "0 in every arm." },
+  ], 0.6, 6.2, 12.1, 0.35, { size: 12 });
+  txt(fr, "Source: analysis/results.md, produced by analysis/analyze.py from the scoring runs (95% CI = Wilson interval of the detection rate)", 0.6, 6.58, 12.1, 0.28, { size: 10, italic: true });
   fr.addNotes("This slide is a direct copy of analysis/results.md: the per-arm table and the per-fault table. Fault descriptions are in that file and on the 'Six faults escaped every arm' slide.");
 
   // ---- by area (native chart) ----
@@ -1251,7 +1257,7 @@ function extension() {
     ["Compare time spent", "Done (estimated): 160 min manual vs 50 min AI review"],
     ["Retain an AI prompt/review log", "Done: logs/ai_prompt_log.csv and logs/ai_review_sheet.csv"],
     ["Unique output: AI-assisted regression suite", "Delivered: tests/ai/run1 (340 cases, all passing on sefs-v1.0)"],
-    ["Unique output: controlled evaluation", "Delivered, with the deviations on the next slide"],
+    ["Unique output: controlled evaluation", "Delivered: frozen code, hidden faults, isolated AI workspace, statistics in analysis/"],
   ];
   v.addTable([[H("Intended"), H("Delivered")], ...rowsV.map((rw, i) => rw.map((t2, j) => ({
     text: t2, options: { bold: j === 0, fill: { color: i % 2 ? "FFFFFF" : HEX.lt2 } },
