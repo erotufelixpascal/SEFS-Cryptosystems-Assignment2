@@ -12,7 +12,7 @@ import re
 import shutil
 from pptx import Presentation
 
-SOURCE = "Group 6 SEFS Progress v9.pptx"
+SOURCE = "Group 6 SEFS Progress v10.pptx"
 # The summary carries the same version number as the full deck it is built from.
 OUT = "Group 6 SEFS Summary " + re.search(r"v\d+", SOURCE).group() + ".pptx"
 

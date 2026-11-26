@@ -11,7 +11,7 @@ const pptxgen = require("pptxgenjs");
 const { applyTheme } = require("./apply_theme.js");
 
 // Bump the version number each time the deck is reissued (v4 was the previous progress review).
-const OUT = "Group 6 SEFS Progress v9.pptx";
+const OUT = "Group 6 SEFS Progress v10.pptx";
 
 const TEAM = [
   ["Pascal Felix Erotu", "MAY26/MAIDS/0056U"],
