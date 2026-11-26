@@ -2,12 +2,13 @@
 
 | File | What it is |
 |---|---|
-| `Group 6 SEFS Progress v8.pptx` (+ `.pdf`) | Current deck (42 slides): full system design and flow, Parts 1–3, security goals (CIA), extension experiment, results and conclusions. Built without layout placeholders or theme colours, so it displays the same in PowerPoint, WPS Office and previews |
+| `Group 6 SEFS Progress v9.pptx` (+ `.pdf`) | Current deck (45 slides): introduction and objectives, full system design and flow, Parts 1–3, security goals (CIA), extension methodology, full results table (from analysis/results.md) and conclusions. Built without layout placeholders or theme colours, so it displays the same in PowerPoint, WPS Office and previews |
+| `Group 6 SEFS Progress v8.pptx` (+ `.pdf`) | Earlier deck (42 slides) |
 | `Group 6 SEFS Progress v7.pptx` (+ `.pdf`) | Earlier deck |
 | `Group 6 SEFS Progress v6.pptx` | Earlier deck: Parts 1–3, security goals (CIA) |
 | `Group 6 SEFS Progress v5.pptx` | Earlier deck: Parts 1 and 2 |
 | `Group 6 SEFS Progress v4.pptx` | Previous progress review, kept for reference |
-| `Group 6 SEFS Summary (10 slides).pptx` (+ `.pdf`) | Short version: the 10 most important slides of v8. Rebuild with `python make_summary.py` (needs python-pptx) |
+| `Group 6 SEFS Summary.pptx` (+ `.pdf`) | Short version (13 slides) of v9: introduction and objectives, status, design, CIA, tampering, methodology, results, conclusions. Rebuild with `python make_summary.py` (needs python-pptx); slides are picked by title |
 | `build_slides.js` | Generates the current deck. Edit this, not the .pptx |
 
 ## Updating the deck when a part is finished

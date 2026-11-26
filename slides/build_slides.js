@@ -11,7 +11,7 @@ const pptxgen = require("pptxgenjs");
 const { applyTheme } = require("./apply_theme.js");
 
 // Bump the version number each time the deck is reissued (v4 was the previous progress review).
-const OUT = "Group 6 SEFS Progress v8.pptx";
+const OUT = "Group 6 SEFS Progress v9.pptx";
 
 const TEAM = [
   ["Pascal Felix Erotu", "MAY26/MAIDS/0056U"],
@@ -178,6 +178,37 @@ function opening() {
     x: 0.7, y: 4.4, w: 7.2, colW: [3.6, 3.6], rowH: 0.48, fontSize: 18, border: { type: "solid", pt: 1, color: "FFFFFF" }, valign: "middle", margin: [0.04, 0.12, 0.04, 0.12],
   });
   s.addNotes("SEFS stores files encrypted on disk, split into fixed-size chunks, with every chunk authenticated. This deck covers the parts completed so far and is extended as each further part is finished.");
+
+  // ---- introduction and objectives ----
+  const io = content("Introduction and objectives", "Overview");
+  box(io, "", 0.6, 1.4, 5.6, 5.2, { fill: C.text1 });
+  txt(io, "Introduction", 0.85, 1.6, 5.1, 0.4, { bold: true, color: HEX.accent2, size: 17 });
+  txt(io, [
+    { text: "Files saved on a shared disk can be read or quietly changed by anyone who can reach that disk.", options: { breakLine: true } },
+    { text: " ", options: { fontSize: 6, breakLine: true } },
+    { text: "SEFS, a Secure Encrypted File System, solves this: only registered users can log in, every file is stored encrypted, split into fixed-size chunks, and every chunk carries an integrity tag, so any tampering is detected before data is returned.", options: { breakLine: true } },
+    { text: " ", options: { fontSize: 6, breakLine: true } },
+    { text: "We built it in pure Python and then used it as the test subject for a study comparing AI-assisted and manual testing." },
+  ], 0.85, 2.1, 5.1, 4.3, { size: 14, color: "D6DEE5" });
+  txt(io, "Objectives", 6.6, 1.4, 6.1, 0.4, { bold: true, color: C.text1, size: 17 });
+  const objs = [
+    ["Authenticate users", "Store passwords only as a salt and a slow hash (Part 1)"],
+    ["Keep file contents confidential", "AES-128-CTR encryption with per-user keys (Parts 2–3)"],
+    ["Detect any tampering", "HMAC on every chunk and a digest of every meta file (Parts 2–3)"],
+    ["Handle files of any size", "Linked chains of 1,024-byte chunks with safe partial writes (Part 3)"],
+    ["Interoperate", "Exchange files with a partner group (Part 4, next)"],
+    ["Answer a research question", "Does AI-assisted test generation find more defects than manual tests in a fixed time? (Extension)"],
+  ];
+  objs.forEach(([h, t2], i) => {
+    const y = 1.9 + i * 0.78;
+    circleNum(io, i + 1, 6.6, y + 0.08, 0.42, i === 5 ? C.accent2 : C.accent1);
+    txt(io, [
+      { text: h, options: { bold: true, color: C.text1, fontSize: 15, breakLine: true } },
+      { text: t2, options: { fontSize: 12 } },
+    ], 7.2, y, 5.5, 0.75);
+  });
+  io.addNotes("The first five objectives come from the assignment brief (Parts 1-4). The sixth is our group's extension: a controlled experiment comparing AI-assisted and manual test generation on the finished system.");
+
 
   // ---- status ----
   const t = content("Where the project stands", "Overview");
@@ -904,7 +935,7 @@ function securityGoals() {
 // ======================================================================
 function extension() {
   const SEC = "Extension";
-  divider("06", "Extension · AI-assisted vs manual test generation", SEC, ["Research question and fair design", "The three arms and the 20 seeded faults", "How scoring works", "Results: detection, coverage, time", "Faults every arm missed", "Intent vs delivered", "Threats to validity", "Conclusions and recommendations"]);
+  divider("06", "Extension · AI-assisted vs manual test generation", SEC, ["Research question and fair design", "Methodology step by step", "The three arms and the 20 seeded faults", "How scoring works", "Results: full table, detection, coverage, time", "Faults every arm missed", "Intent vs delivered", "Threats to validity", "Conclusions and recommendations"]);
 
   // ---- research question and design ----
   const d = content("The question, and how we tested it fairly", SEC);
@@ -940,6 +971,47 @@ function extension() {
     ], x + 0.55, 4.97, 3.4, 1.3);
   });
   d.addNotes("The design follows docs/EXPERIMENT.md. Seeded faults are the held-out evaluation set, like a test set in machine learning: both arms are scored against the same 20 faults.");
+
+  // ---- methodology, step by step ----
+  const me = content("Methodology: how the experiment was run", SEC);
+  const cols = [
+    ["1 · Set up", C.text1, [
+      "Code frozen at tag sefs-v1.0; it never changes between arms",
+      "Pascal seeds 20 realistic bugs, 5 per area, as find/replace edits",
+      "Faults are git-ignored: the tester and the AI never see them",
+      "Both arms get the same specification and test fixtures",
+    ]],
+    ["2 · Manual arm", HEX.accent4, [
+      "Daniel writes pytest tests by hand, no AI",
+      "120-minute budget (he used 160)",
+      "Written first, then frozen, so AI output cannot influence it",
+      "Extra tests after the budget are kept apart (manual_extended)",
+    ]],
+    ["3 · AI-assisted arm", HEX.accent1, [
+      "Fresh Claude agent, locked in an isolated workspace with the spec only",
+      "5 standard prompts: authentication, round trip, chunk boundaries, tamper, gap review",
+      "Daniel reviews every test with the group: accept, edit or reject",
+      "Every prompt and decision logged",
+    ]],
+    ["4 · Measure and analyse", HEX.accent2, [
+      "Mutation testing: run each suite against each fault (run_mutants.py)",
+      "Coverage of src/sefs with coverage.py",
+      "False positives and minutes from the logs",
+      "McNemar exact test + bootstrap 95% CI (analyze.py)",
+    ]],
+  ];
+  cols.forEach(([h, col, items], i) => {
+    const x = 0.6 + i * 3.08;
+    box(me, h, x, 1.4, 2.88, 0.55, { fill: col, color: C.background1, bold: true, size: 15, r: 0.04 });
+    box(me, "", x, 2.0, 2.88, 3.55, { fill: C.background2, r: 0.04 });
+    txt(me, items.map((t2, j) => ({ text: t2, options: { bullet: true, breakLine: j < items.length - 1 } })), x + 0.12, 2.15, 2.66, 3.35, { size: 13, color: C.text1, psa: 6 });
+    if (i < 3) arrow(me, x + 2.9, 1.675, x + 3.06, 1.675);
+  });
+  box(me, [
+    { text: "Why it is fair: ", options: { bold: true } },
+    { text: "a paired design. Every arm is scored against the same 20 hidden faults on the same frozen code, so the arms are compared fault by fault. A fault counts as detected when at least one test fails on the faulty copy; every suite must first pass on the unchanged code." },
+  ], 0.6, 5.75, 12.1, 0.95, { fill: C.text1, color: C.background1, size: 13, align: "left", margin: 12 });
+  me.addNotes("Full procedure: docs/EXPERIMENT.md sections 3-5. The evaluation set (seeded faults) works like a held-out test set: nobody writing tests could tune to it. Prompts are logged in logs/ai_prompt_log.csv, review decisions in logs/ai_review_sheet.csv, time in logs/time_log.csv.");
 
   // ---- the three arms ----
   const a = content("Three arms, scored against the same 20 faults", SEC);
@@ -1023,6 +1095,48 @@ function extension() {
   ], 0.6, 3.75, 8.0, 1.95, { fill: C.accent1, color: C.background1, size: 17, align: "left", margin: 14 });
   txt(r, "Source: analysis/results.md (20 faults scored in every arm; bootstrap 10,000 resamples, seed 2026)", 0.6, 6.05, 12.1, 0.35, { size: 11, italic: true });
   r.addNotes("McNemar's test uses only the faults one arm caught and the other missed: 9 versus 0. The confidence interval comes from resampling the 20 faults.");
+
+  // ---- full results (from analysis/results.md) ----
+  const fr = content("Results in full: every arm, every fault", SEC);
+  const rowsR = [
+    ["manual", "8", "5/20 (25%)", "11–47%", "70.9%", "47.1%", "5", "160"],
+    ["ai/run1", "340", "14/20 (70%)", "48–86%", "87.7%", "77.3%", "1", "50"],
+    ["manual_extended", "5", "0/20 (0%)", "0–16%", "36.8%", "9.7%", "0", "100"],
+  ];
+  fr.addTable([[H("Arm"), H("Tests"), H("Faults detected"), H("95% CI"), H("Line cov."), H("Branch cov."), H("False pos."), H("Minutes")],
+    ...rowsR.map((rw, i) => rw.map((v2, j) => ({ text: v2, options: { bold: j === 0 || (i === 1 && j === 2), color: i === 1 && j === 2 ? HEX.accent1 : HEX.dk1, fontFace: j === 0 ? "Courier New" : undefined, fill: { color: i % 2 ? "FFFFFF" : HEX.lt2 } } })))],
+    { x: 0.6, y: 1.35, w: 12.1, colW: [2.3, 1.0, 2.0, 1.4, 1.35, 1.45, 1.3, 1.3], rowH: 0.42, fontSize: 13, color: HEX.dk1, border: { type: "solid", pt: 0.5, color: "D5DCE2" }, valign: "middle", margin: [0.03, 0.1, 0.03, 0.1] });
+  txt(fr, "Every fault, every arm", 0.6, 3.25, 6, 0.35, { bold: true, color: C.text1, size: 15 });
+  const DET = {
+    "manual": [7, 11, 12, 15, 17],
+    "ai/run1": [1, 2, 3, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17],
+    "manual_extended": [],
+  };
+  const areaNames = ["Authentication", "Round trip", "Chunk boundaries", "Tamper"];
+  const gx = 2.4, cw = 0.48, gap = 0.12;
+  const cx = (n) => gx + (n - 1) * cw + Math.floor((n - 1) / 5) * gap;
+  areaNames.forEach((an, ai) => {
+    txt(fr, an, cx(ai * 5 + 1), 3.65, 5 * cw - 0.04, 0.3, { size: 11, bold: true, color: C.text2, align: "center" });
+  });
+  for (let n = 1; n <= 20; n++) {
+    txt(fr, "M" + String(n).padStart(2, "0"), cx(n), 3.95, cw - 0.04, 0.28, { size: 10, align: "center", color: C.text2 });
+  }
+  Object.entries(DET).forEach(([arm, hits], ri) => {
+    const y = 4.28 + ri * 0.5;
+    txt(fr, arm, 0.6, y, 1.95, 0.44, { size: 12, bold: true, color: C.text1, font: "Courier New", valign: "middle" });
+    for (let n = 1; n <= 20; n++) {
+      const hit = hits.includes(n);
+      fr.addShape(SH.RECTANGLE, { x: cx(n), y, w: cw - 0.04, h: 0.44, fill: { color: hit ? HEX.accent5 : "E4E9ED" }, line: { color: "FFFFFF", width: 0.5 } });
+    }
+    txt(fr, `${hits.length}/20`, cx(20) + cw + 0.1, y, 0.7, 0.44, { size: 12, bold: true, color: C.text1, valign: "middle" });
+  });
+  fr.addShape(SH.RECTANGLE, { x: 0.6, y: 5.9, w: 0.3, h: 0.22, fill: { color: HEX.accent5 }, line: { color: HEX.accent5 } });
+  txt(fr, "detected", 0.98, 5.86, 1.2, 0.3, { size: 12 });
+  fr.addShape(SH.RECTANGLE, { x: 2.1, y: 5.9, w: 0.3, h: 0.22, fill: { color: "E4E9ED" }, line: { color: "C9D2DA" } });
+  txt(fr, "missed", 2.48, 5.86, 1.2, 0.3, { size: 12 });
+  txt(fr, "Every manual catch was also an AI catch. Six faults (M04, M13, M14, M18, M19, M20) were missed by all three arms.", 3.7, 5.86, 9.0, 0.5, { size: 12, italic: true });
+  txt(fr, "Source: analysis/results.md, produced by analysis/analyze.py from the scoring runs (95% CI = Wilson interval of the detection rate)", 0.6, 6.4, 12.1, 0.3, { size: 10, italic: true });
+  fr.addNotes("This slide is a direct copy of analysis/results.md: the per-arm table and the per-fault table. Fault descriptions are in that file and on the 'Six faults escaped every arm' slide.");
 
   // ---- by area (native chart) ----
   const b = content("Detection by area: AI leads in authentication and round trips", SEC);

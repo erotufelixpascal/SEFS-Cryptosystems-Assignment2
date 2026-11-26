@@ -1,44 +1,58 @@
-"""Build the 10-slide summary deck from the full deck.
+"""Build the 13-slide summary deck from the full deck.
 
     python make_summary.py            (needs python-pptx: pip install python-pptx)
 
-Keeps the slides listed in KEEP (1-based numbers in the full deck), removes the rest,
-renumbers the page numbers and relabels the title slide. Rerun it after rebuilding the
-full deck with build_slides.js; check KEEP if slides were added or moved.
+Keeps the slides whose title starts with one of the entries in KEEP (in the full deck's
+order), removes the rest, renumbers the page numbers and relabels the title slide.
+Slides are found by title, so rebuilding the full deck with build_slides.js does not
+break the selection; only a renamed slide title does.
 """
 
 import re
 import shutil
 from pptx import Presentation
 
-SOURCE = "Group 6 SEFS Progress v8.pptx"
-OUT = "Group 6 SEFS Summary (10 slides).pptx"
+SOURCE = "Group 6 SEFS Progress v9.pptx"
+OUT = "Group 6 SEFS Summary.pptx"
 
 KEEP = [
-    1,   # title
-    2,   # where the project stands
-    5,   # layered design
-    9,   # end-to-end flows
-    11,  # security goals (CIA)
-    13,  # passwords: salt + slow hash (Part 1)
-    24,  # tampering simulation (Parts 2-3)
-    34,  # result: 70% vs 25%
-    35,  # detection by area
-    41,  # conclusions
+    "SEFS: a Secure Encrypted File System",   # title
+    "Introduction and objectives",
+    "Where the project stands",
+    "Layered design",
+    "End-to-end flows",
+    "Security goals",
+    "Tampering simulation",
+    "The question, and how we tested it fairly",
+    "Methodology",
+    "Result: AI-assisted",
+    "Results in full",
+    "Detection by area",
+    "Conclusions",
 ]
 
 shutil.copyfile(SOURCE, OUT)
 prs = Presentation(OUT)
 sld_id_lst = prs.slides._sldIdLst
-ids = list(sld_id_lst)
-assert len(ids) >= max(KEEP), f"{SOURCE} has only {len(ids)} slides"
 
+
+def matches(slide):
+    texts = [sh.text_frame.text.strip() for sh in slide.shapes if sh.has_text_frame]
+    return [k for k in KEEP if any(t.startswith(k) for t in texts)]
+
+
+found = set()
 removed = set()
-for n, sld in enumerate(ids, 1):
-    if n not in KEEP:
+for slide, sld in zip(list(prs.slides), list(sld_id_lst)):
+    m = matches(slide)
+    if m:
+        found.update(m)
+    else:
         removed.add(sld.get("id"))
         prs.part.drop_rel(sld.rId)
         sld_id_lst.remove(sld)
+missing = [k for k in KEEP if k not in found]
+assert not missing, f"slides not found in {SOURCE}: {missing}"
 
 # Drop the removed slides from the section list too (and any section left empty).
 root = prs.part._element

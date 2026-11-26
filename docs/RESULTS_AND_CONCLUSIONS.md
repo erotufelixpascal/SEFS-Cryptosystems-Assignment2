@@ -1,7 +1,7 @@
 # Results and conclusions: AI-assisted vs manual test generation
 
 **Group 6** · Pascal Felix Erotu (fault author) · Daniel Odong (tester) · system under test: `sefs-v1.0`
-**Data:** [`analysis/results.md`](../analysis/results.md) and the CSV files next to it · **Logs:** [`logs/`](../logs) · **Design:** [EXPERIMENT.md](EXPERIMENT.md) · **Slides:** `slides/Group 6 SEFS Progress v7.pptx`
+**Data:** [`analysis/results.md`](../analysis/results.md) and the CSV files next to it · **Logs:** [`logs/`](../logs) · **Design:** [EXPERIMENT.md](EXPERIMENT.md) · **Slides:** `slides/Group 6 SEFS Progress v9.pptx` (summary: `slides/Group 6 SEFS Summary.pptx`)
 
 ## 1. Answer
 
