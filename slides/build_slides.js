@@ -210,6 +210,55 @@ function opening() {
   io.addNotes("The first five objectives come from the assignment brief (Parts 1-4). The sixth is our group's extension: a controlled experiment comparing AI-assisted and manual test generation on the finished system.");
 
 
+  // ---- methodology, step by step ----
+  const me = content("Methodology: build the system, then run the experiment", "Overview");
+  const build = ["Read the spec", "Implement Parts 1–3 in Python", "Unit tests + recorded demos (52/52)", "Freeze the code: sefs-v1.0"];
+  txt(me, "A · Build the system", 0.6, 1.3, 4, 0.35, { bold: true, color: C.text1, size: 14 });
+  build.forEach((t2, i) => {
+    const x = 0.6 + i * 3.08;
+    box(me, t2, x, 1.68, 2.88, 0.5, { fill: C.background2, color: C.text1, size: 13, bold: true, r: 0.04 });
+    if (i < 3) arrow(me, x + 2.9, 1.93, x + 3.06, 1.93);
+  });
+  txt(me, "B · Run the experiment (extension)", 0.6, 2.35, 6, 0.35, { bold: true, color: C.text1, size: 14 });
+  const cols = [
+    ["1 · Set up", C.text1, [
+      "Code frozen at tag sefs-v1.0; it never changes between arms",
+      "Pascal seeds 20 realistic bugs, 5 per area, as find/replace edits",
+      "Faults are git-ignored: the tester and the AI never see them",
+      "Both arms get the same specification and test fixtures",
+    ]],
+    ["2 · Manual arm", HEX.accent4, [
+      "Daniel writes pytest tests by hand, no AI",
+      "120-minute budget (he used 160)",
+      "Written first, then frozen, so AI output cannot influence it",
+      "Extra tests after the budget are kept apart (manual_extended)",
+    ]],
+    ["3 · AI-assisted arm", HEX.accent1, [
+      "Fresh Claude agent, locked in an isolated workspace with the spec only",
+      "5 standard prompts: authentication, round trip, chunk boundaries, tamper, gap review",
+      "Daniel reviews every test with the group: accept, edit or reject",
+      "Every prompt and decision logged",
+    ]],
+    ["4 · Measure and analyse", HEX.accent2, [
+      "Mutation testing: run each suite against each fault (run_mutants.py)",
+      "Coverage of src/sefs with coverage.py",
+      "False positives and minutes from the logs",
+      "McNemar exact test + bootstrap 95% CI (analyze.py)",
+    ]],
+  ];
+  cols.forEach(([h, col, items], i) => {
+    const x = 0.6 + i * 3.08;
+    box(me, h, x, 2.73, 2.88, 0.45, { fill: col, color: C.background1, bold: true, size: 15, r: 0.04 });
+    box(me, "", x, 3.22, 2.88, 2.5, { fill: C.background2, r: 0.04 });
+    txt(me, items.map((t2, j) => ({ text: t2, options: { bullet: true, breakLine: j < items.length - 1 } })), x + 0.1, 3.3, 2.7, 2.38, { size: 11.5, color: C.text1, psa: 3 });
+    if (i < 3) arrow(me, x + 2.9, 2.955, x + 3.06, 2.955);
+  });
+  box(me, [
+    { text: "Why it is fair: ", options: { bold: true } },
+    { text: "a paired design. Every arm is scored against the same 20 hidden faults on the same frozen code, so the arms are compared fault by fault. A fault counts as detected when at least one test fails on the faulty copy; every suite must first pass on the unchanged code." },
+  ], 0.6, 5.85, 12.1, 0.85, { fill: C.text1, color: C.background1, size: 12.5, align: "left", margin: 12 });
+  me.addNotes("Full procedure: docs/EXPERIMENT.md sections 3-5. The evaluation set (seeded faults) works like a held-out test set: nobody writing tests could tune to it. Prompts are logged in logs/ai_prompt_log.csv, review decisions in logs/ai_review_sheet.csv, time in logs/time_log.csv.");
+
   // ---- status ----
   const t = content("Where the project stands", "Overview");
   const done = STATUS.filter((r) => r.state === "done").length;
@@ -935,7 +984,7 @@ function securityGoals() {
 // ======================================================================
 function extension() {
   const SEC = "Extension";
-  divider("06", "Extension · AI-assisted vs manual test generation", SEC, ["Research question and fair design", "Methodology step by step", "The three arms and the 20 seeded faults", "How scoring works", "Results: full table, detection, coverage, time", "Faults every arm missed", "Intent vs delivered", "Threats to validity", "Conclusions and recommendations"]);
+  divider("06", "Extension · AI-assisted vs manual test generation", SEC, ["Research question and fair design", "The three arms and the 20 seeded faults", "How scoring works", "Results: full table, detection, coverage, time", "Faults every arm missed", "Intent vs delivered", "Threats to validity", "Conclusions and recommendations"]);
 
   // ---- research question and design ----
   const d = content("The question, and how we tested it fairly", SEC);
@@ -971,47 +1020,6 @@ function extension() {
     ], x + 0.55, 4.97, 3.4, 1.3);
   });
   d.addNotes("The design follows docs/EXPERIMENT.md. Seeded faults are the held-out evaluation set, like a test set in machine learning: both arms are scored against the same 20 faults.");
-
-  // ---- methodology, step by step ----
-  const me = content("Methodology: how the experiment was run", SEC);
-  const cols = [
-    ["1 · Set up", C.text1, [
-      "Code frozen at tag sefs-v1.0; it never changes between arms",
-      "Pascal seeds 20 realistic bugs, 5 per area, as find/replace edits",
-      "Faults are git-ignored: the tester and the AI never see them",
-      "Both arms get the same specification and test fixtures",
-    ]],
-    ["2 · Manual arm", HEX.accent4, [
-      "Daniel writes pytest tests by hand, no AI",
-      "120-minute budget (he used 160)",
-      "Written first, then frozen, so AI output cannot influence it",
-      "Extra tests after the budget are kept apart (manual_extended)",
-    ]],
-    ["3 · AI-assisted arm", HEX.accent1, [
-      "Fresh Claude agent, locked in an isolated workspace with the spec only",
-      "5 standard prompts: authentication, round trip, chunk boundaries, tamper, gap review",
-      "Daniel reviews every test with the group: accept, edit or reject",
-      "Every prompt and decision logged",
-    ]],
-    ["4 · Measure and analyse", HEX.accent2, [
-      "Mutation testing: run each suite against each fault (run_mutants.py)",
-      "Coverage of src/sefs with coverage.py",
-      "False positives and minutes from the logs",
-      "McNemar exact test + bootstrap 95% CI (analyze.py)",
-    ]],
-  ];
-  cols.forEach(([h, col, items], i) => {
-    const x = 0.6 + i * 3.08;
-    box(me, h, x, 1.4, 2.88, 0.55, { fill: col, color: C.background1, bold: true, size: 15, r: 0.04 });
-    box(me, "", x, 2.0, 2.88, 3.55, { fill: C.background2, r: 0.04 });
-    txt(me, items.map((t2, j) => ({ text: t2, options: { bullet: true, breakLine: j < items.length - 1 } })), x + 0.12, 2.15, 2.66, 3.35, { size: 13, color: C.text1, psa: 6 });
-    if (i < 3) arrow(me, x + 2.9, 1.675, x + 3.06, 1.675);
-  });
-  box(me, [
-    { text: "Why it is fair: ", options: { bold: true } },
-    { text: "a paired design. Every arm is scored against the same 20 hidden faults on the same frozen code, so the arms are compared fault by fault. A fault counts as detected when at least one test fails on the faulty copy; every suite must first pass on the unchanged code." },
-  ], 0.6, 5.75, 12.1, 0.95, { fill: C.text1, color: C.background1, size: 13, align: "left", margin: 12 });
-  me.addNotes("Full procedure: docs/EXPERIMENT.md sections 3-5. The evaluation set (seeded faults) works like a held-out test set: nobody writing tests could tune to it. Prompts are logged in logs/ai_prompt_log.csv, review decisions in logs/ai_review_sheet.csv, time in logs/time_log.csv.");
 
   // ---- the three arms ----
   const a = content("Three arms, scored against the same 20 faults", SEC);
