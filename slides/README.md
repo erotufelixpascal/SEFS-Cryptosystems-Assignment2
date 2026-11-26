@@ -8,14 +8,15 @@
 | `Group 6 SEFS Progress v6.pptx` | Earlier deck: Parts 1–3, security goals (CIA) |
 | `Group 6 SEFS Progress v5.pptx` | Earlier deck: Parts 1 and 2 |
 | `Group 6 SEFS Progress v4.pptx` | Previous progress review, kept for reference |
-| `Group 6 SEFS Summary.pptx` | Short version (13 slides) of v9: introduction and objectives, methodology, status, design, CIA, tampering, results, intent vs delivered, threats to validity, conclusions. Rebuild with `python make_summary.py` (needs python-pptx); slides are picked by title |
+| `Group 6 SEFS Summary v9.pptx` | Current short version (13 slides) of v9: introduction and objectives, methodology, status, design, CIA, tampering, results, intent vs delivered, threats to validity, conclusions. Rebuild with `python make_summary.py` (needs python-pptx); slides are picked by title |
+| `Group 6 SEFS Summary v8.pptx` | Earlier short version (10 slides) of v8 |
 | `build_slides.js` | Generates the current deck. Edit this, not the .pptx |
 
 ## Updating the deck when a part is finished
 
 1. In `build_slides.js`, set the part's flag in `DONE` to `true` .
 2. Update that part's line in `STATUS` (state `"done"` and its detail text).
-3. Bump the version in `OUT` (for example `v6`).
+3. Bump the version in `OUT` (for example `v10`), so earlier decks are kept, never overwritten.
 4. Rebuild from this folder:
 
    ```
@@ -23,6 +24,8 @@
    node build_slides.js
    ```
 
-The status slide, test chart and "Next steps" list update automatically from the `DONE` flags. Slides for Part 4 and the extension have not been written yet.
+5. Set `SOURCE` in `make_summary.py` to the new deck and run `python make_summary.py`. The summary gets the same version number (`Group 6 SEFS Summary v10.pptx`).
+
+The status slide, test chart and "Next steps" list update automatically from the `DONE` flags. Slides for Part 4 have not been written yet.
 
 Edits made directly in PowerPoint are lost on the next rebuild, so make lasting changes in `build_slides.js`.
