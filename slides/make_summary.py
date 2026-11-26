@@ -23,11 +23,11 @@ KEEP = [
     "End-to-end flows",
     "Security goals",
     "Tampering simulation",
-    "The question, and how we tested it fairly",
     "Methodology",
     "Result: AI-assisted",
     "Results in full",
     "Project intent vs what we delivered",
+    "How far the result can be trusted",      # threats to validity
     "Conclusions",
 ]
 
